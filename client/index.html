@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TetriNET</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- LOBBY SCREEN -->
+        <div id="screen-lobby" class="screen active">
+            <div class="panel glass-panel">
+                <h1 class="neon-title">TetriNET</h1>
+                <div class="form-group">
+                    <label>Player Name:</label>
+                    <input type="text" id="input-player-name" placeholder="Enter your name" maxlength="15">
+                </div>
+                <div class="form-group">
+                    <label>Room ID (optional):</label>
+                    <input type="text" id="input-room-id" placeholder="Leave empty to create">
+                </div>
+                <button id="btn-join-room" class="btn-primary">Join / Create Room</button>
+                
+                <div class="room-list-container">
+                    <h3>Available Rooms</h3>
+                    <ul id="room-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- WAITING ROOM SCREEN -->
+        <div id="screen-waiting" class="screen">
+            <div class="panel glass-panel">
+                <h2 class="neon-title">Waiting Room</h2>
+                <h3 id="waiting-room-id" class="glow-text"></h3>
+                
+                <div class="waiting-layout">
+                    <div class="player-list-container">
+                        <h3>Players</h3>
+                        <ul id="waiting-player-list"></ul>
+                        <div class="controls">
+                            <button id="btn-start-game" class="btn-primary hidden">Start Game</button>
+                            <button id="btn-leave-room" class="btn-secondary">Leave Room</button>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-container">
+                        <div id="waiting-chat-messages" class="chat-messages"></div>
+                        <div class="chat-input-wrapper">
+                            <input type="text" id="waiting-chat-input" placeholder="Type a message...">
+                            <button id="btn-waiting-chat">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="screen-game" class="screen">
+            <div class="game-layout">
+                <!-- Left Sidebar -->
+                <div class="sidebar left-sidebar">
+                    <div class="panel info-panel glass-panel">
+                        <div class="stat-box">
+                            <div class="stat-label">SCORE</div>
+                            <div id="game-score" class="stat-value glow-text">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">LEVEL</div>
+                            <div id="game-level" class="stat-value">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">LINES</div>
+                            <div id="game-lines" class="stat-value">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel next-piece-panel glass-panel">
+                        <div class="stat-label">NEXT</div>
+                        <canvas id="canvas-next-piece" width="120" height="120"></canvas>
+                    </div>
+
+                    <div class="panel specials-panel glass-panel">
+                        <div class="stat-label">SPECIALS (1-5)</div>
+                        <div id="specials-queue" class="specials-queue"></div>
+                    </div>
+                </div>
+
+                <!-- Main Board -->
+                <div class="main-board-container">
+                    <canvas id="canvas-main-board" width="360" height="660"></canvas>
+                    <div id="main-dead-overlay" class="dead-overlay hidden">
+                        <h2>ELIMINATED</h2>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar / Opponents -->
+                <div class="sidebar right-sidebar">
+                    <div id="opponent-boards" class="opponent-boards">
+                        <!-- Dynamically added canvases -->
+                    </div>
+                    <div class="panel in-game-chat glass-panel">
+                        <div id="game-chat-messages" class="chat-messages mini"></div>
+                        <input type="text" id="game-chat-input" placeholder="Chat..." class="mini-input">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME OVER SCREEN -->
+        <div id="screen-gameover" class="screen">
+            <div class="panel glass-panel">
+                <h1 class="neon-title">GAME OVER</h1>
+                <h2 id="gameover-winner" class="glow-text"></h2>
+                
+                <div class="final-scores-container">
+                    <h3>Final Scores</h3>
+                    <ul id="gameover-scores"></ul>
+                </div>
+                
+                <div class="controls">
+                    <button id="btn-play-again" class="btn-primary hidden">Play Again</button>
+                    <button id="btn-back-lobby" class="btn-secondary">Back to Lobby</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="notification-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/TetrisEngine.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/SocketClient.js"></script>
+    <script src="js/GameManager.js"></script>
+    <script src="js/UI.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
