@@ -344,6 +344,38 @@ canvas { display: block; }
 }
 .special-letter { line-height: 1; }
 
+/* Special types: positive / negative / neutral */
+.special--positive {
+  border-color: rgba(0, 255, 136, 0.4);
+  color: #00ff88;
+}
+.special--positive.special-active {
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.15);
+  color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+.special--negative {
+  border-color: rgba(255, 51, 85, 0.4);
+  color: #ff3355;
+}
+.special--negative.special-active {
+  border-color: #ff3355;
+  background: rgba(255, 51, 85, 0.15);
+  color: #ff3355;
+  box-shadow: 0 0 8px rgba(255, 51, 85, 0.5);
+}
+.special--neutral {
+  border-color: rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+}
+.special--neutral.special-active {
+  border-color: #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
 /* Target selector (1-6 keys) */
 .target-hint {
   font-size: 0.65rem;
@@ -351,6 +383,9 @@ canvas { display: block; }
   margin-top: 4px;
   font-family: 'Orbitron', sans-serif;
 }
+.target-hint--positive { color: #00ff88; }
+.target-hint--negative { color: #ff3355; }
+.target-hint--neutral  { color: #ffd700; }
 
 /* Room list items */
 .room-item {

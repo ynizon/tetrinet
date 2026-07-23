@@ -22,8 +22,14 @@ class GameManager {
     this.dropTimer = null;
     this.lastTime = 0;
     this.dropAccumulator = 0;
+    // introduce lock delay handling
+    this.lockDelay = 200; // milliseconds
+    this.lockTimer = null;
     // TetriNET targeting: ordered list of [myId, opp1, opp2, ...]
     this.myId = null;
+    // Track alive players (including self)
+    // this.alivePlayers = new Set();
+    // this.alivePlayers.add(this.myId);
   }
 
   startGame(seed, startLevel) {
@@ -66,6 +72,7 @@ class GameManager {
     if (!this.isAlive) return;
     if (TetrisEngine.canPlace(this.board, this.currentPiece.shape, this.currentPiece.row, this.currentPiece.col + dc)) {
       this.currentPiece.col += dc;
+      this.clearLockTimer();
     }
   }
 
@@ -73,8 +80,15 @@ class GameManager {
     if (!this.isAlive) return;
     if (TetrisEngine.canPlace(this.board, this.currentPiece.shape, this.currentPiece.row + 1, this.currentPiece.col)) {
       this.currentPiece.row++;
+      this.clearLockTimer(); // resetting lock timer on descent
     } else {
-      this.lockPiece();
+      // start lock delay if not already started
+      if (!this.lockTimer) {
+        this.lockTimer = setTimeout(() => {
+          this.lockPiece();
+          this.lockTimer = null;
+        }, this.lockDelay);
+      }
     }
   }
 
@@ -92,6 +106,7 @@ class GameManager {
     if (TetrisEngine.canPlace(this.board, newShape, this.currentPiece.row, this.currentPiece.col)) {
       this.currentPiece.rotIndex = newRot;
       this.currentPiece.shape = newShape;
+      this.clearLockTimer();
     }
   }
 
@@ -132,6 +147,15 @@ class GameManager {
     this.socket.sendBoardUpdate({ board: this.board, score: this.score, level: this.level, lines: this.lines });
     this.ui.updateDisplays(this.score, this.level, this.lines);
     if (this.isAlive) this.spawnPiece();
+    this.clearLockTimer();
+  }
+
+  // Clears any pending lock delay timer
+  clearLockTimer() {
+    if (this.lockTimer) {
+      clearTimeout(this.lockTimer);
+      this.lockTimer = null;
+    }
   }
 
   loop(time) {
@@ -190,17 +214,29 @@ class GameManager {
       return;
     }
 
-    const special = this.specials.shift(); // consume first special
+    // Guard: ensure target is alive before consuming special
+    if (targetIndex > 0 && (!this.alivePlayers || !this.alivePlayers.has(targetId))) {
+      this.ui.showNotification(`Target player is dead or unavailable!`, 'warning');
+      return;
+    }
+
+    const special = this.specials[0]; // peek first special
+    const specialDef = CONFIG.SPECIALS[special];
+    const specialName = specialDef ? specialDef.name : special;
+    const specialType = specialDef ? specialDef.type : 'neutral';
+
+    this.specials.shift(); // consume first special
 
     if (targetIndex === 0 || targetId === this.myId) {
-      // Self-target
+      // Self-target (positive/neutral only)
       this.board = TetrisEngine.applySpecial(this.board, special);
       this.socket.sendBoardUpdate({ board: this.board, score: this.score, level: this.level, lines: this.lines });
-      this.ui.showNotification(`Used on self: ${CONFIG.SPECIAL_NAMES[special] || special}`, 'info');
+      this.ui.showNotification(`Utilisé sur soi : ${specialName}`, 'info');
     } else {
       // Opponent target
       this.socket.useSpecial({ special, targetId });
-      this.ui.showNotification(`Sent ${CONFIG.SPECIAL_NAMES[special] || special} to target!`, 'info');
+      const notifType = specialType === 'negative' ? 'warning' : 'success';
+      this.ui.showNotification(`Envoyé ${specialName} à la cible !`, notifType);
     }
 
     // Refresh the specials display
@@ -226,6 +262,8 @@ class GameManager {
     else if (key === '4' || key === "'" || code === 'Digit4' || code === 'Numpad4') this.useSpecialOnTarget(3);
     else if (key === '5' || key === '(' || code === 'Digit5' || code === 'Numpad5') this.useSpecialOnTarget(4);
     else if (key === '6' || key === '-' || code === 'Digit6' || code === 'Numpad6') this.useSpecialOnTarget(5);
+    // Add S key for screen exchange (switchField special)
+    else if (key === 's' || key === 'S') this.useSpecialOnTarget(1);
   }
 
   addGarbage(lines) {

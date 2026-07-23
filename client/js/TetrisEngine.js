@@ -182,27 +182,44 @@ class TetrisEngine {
     return newBoard;
   }
 
-  static spawnSpecialBlock(board) {
-    let newBoard = board.map(r => [...r]);
-    let filledCells = [];
-    for (let r = 0; r < CONFIG.BOARD_HEIGHT; r++) {
-      for (let c = 0; c < CONFIG.BOARD_WIDTH; c++) {
-        if (newBoard[r][c] >= 1 && newBoard[r][c] <= 8) {
-          filledCells.push({ r, c });
+    static spawnSpecialBlock(board) {
+        let newBoard = board.map(r => [...r]);
+        
+        // Find highest row containing filled blocks (colors 1-8)
+        let highestRow = -1;
+        for (let r = 0; r < CONFIG.BOARD_HEIGHT; r++) {
+            if (board[r].some(cell => cell >= 1 && cell <= 8)) {
+                highestRow = r;
+                break;
+            }
         }
-      }
-    }
-    if (filledCells.length > 0) {
-      const target = filledCells[Math.floor(Math.random() * filledCells.length)];
-      const specialCodes = Object.keys(CONFIG.SPECIAL_LETTERS).map(Number);
-      const randomCode = specialCodes[Math.floor(Math.random() * specialCodes.length)];
-      newBoard[target.r][target.c] = randomCode;
-    }
-    return newBoard;
-  }
 
-  static calculateScore(linesCleared, level) {
-    const scores = [0, 100, 300, 500, 800];
-    return scores[linesCleared] * (level + 1);
-  }
+        if (highestRow !== -1) {
+            // Pick from the top 5 filled rows starting from highestRow
+            const maxRow = Math.min(CONFIG.BOARD_HEIGHT - 1, highestRow + 4);
+            const candidates = [];
+            for (let r = highestRow; r <= maxRow; r++) {
+                for (let c = 0; c < CONFIG.BOARD_WIDTH; c++) {
+                    if (newBoard[r][c] >= 1 && newBoard[r][c] <= 8) {
+                        candidates.push({ r, c });
+                    }
+                }
+            }
+
+            if (candidates.length > 0) {
+                const target = candidates[Math.floor(Math.random() * candidates.length)];
+                const specialCodes = Object.keys(CONFIG.SPECIAL_LETTERS).map(Number);
+                const randomCode = specialCodes[Math.floor(Math.random() * specialCodes.length)];
+                newBoard[target.r][target.c] = randomCode;
+            }
+        }
+
+        return newBoard;
+    }
+
+    static calculateScore(linesCleared, level) {
+        const base = [0, 40, 100, 300, 1200];
+        if (linesCleared < 0 || linesCleared > 4) return 0;
+        return base[linesCleared] * (level + 1);
+    }
 }

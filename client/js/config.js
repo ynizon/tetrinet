@@ -23,16 +23,16 @@ const CONFIG = {
     17: '#888888', // blockQuake
     18: '#00ccff', // blockGravity
   },
-  SPECIAL_NAMES: {
-    addLine:       '➕ Add Line',
-    clearLine:     '🧹 Clear Line',
-    nuke:          '💥 Nuke',
-    randomClear:   '🎲 Random Clear',
-    switchField:   '🔄 Switch Field',
-    clearSpecials: '🛡️ Clear Specials',
-    blockBomb:     '💣 Block Bomb',
-    blockQuake:    '🌊 Quake',
-    blockGravity:  '⬇️ Gravity',
+  SPECIALS: {
+    addLine:       { name: '➕ Add Line',        type: 'negative' },
+    clearLine:     { name: '🧹 Clear Line',      type: 'positive' },
+    nuke:          { name: '💥 Nuke',             type: 'positive' },
+    randomClear:   { name: '🎲 Random Clear',     type: 'negative' },
+    switchField:   { name: '🔄 Switch Field',     type: 'neutral'  },
+    clearSpecials: { name: '🛡️ Clear Specials',   type: 'positive' },
+    blockBomb:     { name: '💣 Block Bomb',        type: 'negative' },
+    blockQuake:    { name: '🌊 Quake',             type: 'negative' },
+    blockGravity:  { name: '⬇️ Gravity',          type: 'positive' },
   },
   // Classic TetriNET letter codes shown ON the board blocks
   SPECIAL_LETTERS: {

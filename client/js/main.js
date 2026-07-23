@@ -126,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gameManager = new GameManager(socket, renderer, nextRenderer, ui);
     gameManager.myId = myId;
     gameManager.targetOrder = targetOrder;
+    gameManager.alivePlayers = new Set(targetOrder);
     gameManager.startGame(data.seed, data.startLevel);
   });
 
@@ -169,7 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const board = TetrisEngine.applySpecial(gameManager.board, special);
       gameManager.board = board;
       socket.sendBoardUpdate({ board: gameManager.board, score: gameManager.score, level: gameManager.level, lines: gameManager.lines });
-      ui.showNotification(`Received Special: ${CONFIG.SPECIAL_NAMES[special] || special}!`, 'warning');
+      const specialDef = CONFIG.SPECIALS[special];
+      const specialName = specialDef ? specialDef.name : special;
+      ui.showNotification(`Pouvoir reçu : ${specialName} !`, 'warning');
     }
   });
 
@@ -177,6 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // PLAYER LOST / GAME OVER
   // ─────────────────────────────────────────────
   socket.on('player_lost', (playerId) => {
+    if (gameManager && gameManager.alivePlayers) {
+      gameManager.alivePlayers.delete(playerId);
+    }
+
     if (playerId === myId) return; // handled locally by gameManager.gameOver()
 
     const oRenderer = opponentRenderers.get(playerId);

@@ -104,9 +104,13 @@ export class GameRoom {
         if (special === 'switchField' && targetId) {
             const target = this.players.get(targetId);
             if (target && target.isAlive) {
-                const tempBoard = player.board;
-                player.board = target.board;
-                target.board = tempBoard;
+                // Duplicate current player board and target board into temporary variables (deep copy)
+                const tempPlayerBoard = JSON.parse(JSON.stringify(player.board));
+                const tempTargetBoard = JSON.parse(JSON.stringify(target.board));
+
+                // Exchange boards using the temporary copies
+                player.board = tempTargetBoard;
+                target.board = tempPlayerBoard;
                 
                 io.to(this.id).emit('board_update', {
                     playerId: player.id,
@@ -171,9 +175,17 @@ export class GameRoom {
         if (aliveCount <= 1 && this.players.size > 1) {
             this.gameStarted = false;
             io.to(this.id).emit('game_over', { winner: lastAliveId });
+            // Reset all players for a fresh game, including clearing stored specials
+            for (const p of this.players.values()) {
+                p.reset();
+            }
         } else if (aliveCount === 0 && this.players.size === 1) {
             this.gameStarted = false;
             io.to(this.id).emit('game_over', { winner: null });
+            // Reset the sole player as well
+            for (const p of this.players.values()) {
+                p.reset();
+            }
         }
     }
 

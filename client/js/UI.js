@@ -164,17 +164,23 @@ class UI {
     // Show all specials in queue (first = active)
     specials.forEach((special, i) => {
       const btn = document.createElement('div');
-      btn.className = 'special-slot' + (i === 0 ? ' special-active' : '');
-      btn.title = CONFIG.SPECIAL_NAMES[special] || special;
+      const specialDef = CONFIG.SPECIALS[special];
+      const specialType = specialDef ? specialDef.type : 'neutral';
+      const specialName = specialDef ? specialDef.name : special;
+      btn.className = 'special-slot special--' + specialType + (i === 0 ? ' special-active' : '');
+      btn.title = specialName;
       btn.innerHTML = `<span class="special-letter">${this._specialLetter(special)}</span>`;
       container.appendChild(btn);
     });
 
     // Target hint line
     if (specials.length > 0) {
+      const firstDef = CONFIG.SPECIALS[specials[0]];
+      const firstName = firstDef ? firstDef.name : specials[0];
+      const firstType = firstDef ? firstDef.type : 'neutral';
       const hint = document.createElement('div');
-      hint.className = 'target-hint';
-      hint.textContent = `▶ ${CONFIG.SPECIAL_NAMES[specials[0]] || specials[0]}`;
+      hint.className = 'target-hint target-hint--' + firstType;
+      hint.textContent = `▶ ${firstName}`;
       container.appendChild(hint);
     }
   }
