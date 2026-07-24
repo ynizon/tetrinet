@@ -1,4 +1,4 @@
-import { Board, PlayerState, SpecialType } from './types';
+import { Board, PlayerState, SpecialType, TeamColor } from './types';
 import { TetrisEngine } from './TetrisEngine';
 
 export class Player {
@@ -10,6 +10,7 @@ export class Player {
     lines: number;
     isAlive: boolean;
     specials: SpecialType[];
+    team: TeamColor;
 
     constructor(id: string, name: string) {
         this.id = id;
@@ -20,6 +21,7 @@ export class Player {
         this.lines = 0;
         this.isAlive = true;
         this.specials = [];
+        this.team = 'none';
     }
 
     /**
@@ -34,7 +36,8 @@ export class Player {
             level: this.level,
             lines: this.lines,
             isAlive: this.isAlive,
-            specials: [...this.specials]
+            specials: [...this.specials],
+            team: this.team
         };
     }
 

@@ -6,6 +6,8 @@ export type CellType = number;
 
 export type Board = number[][];
 
+export type TeamColor = 'red' | 'blue' | 'green' | 'yellow' | 'none';
+
 export interface PlayerState {
   id: string;
   name: string;
@@ -15,6 +17,7 @@ export interface PlayerState {
   lines: number;
   isAlive: boolean;
   specials: SpecialType[];
+  team: TeamColor;
 }
 
 export interface RoomState {
@@ -35,6 +38,7 @@ export interface RoomSummary {
 
 export interface ClientToServerEvents {
   join_room: (data: {roomId: string, playerName: string}, callback: (ok: boolean, err?: string) => void) => void;
+  set_team: (team: TeamColor) => void;
   start_game: () => void;
   board_update: (data: {board: Board, score: number, level: number, lines: number}) => void;
   lines_cleared: (data: {count: number, board: Board, score: number}) => void;
@@ -54,7 +58,8 @@ export interface ServerToClientEvents {
   receive_garbage: (lines: number) => void;
   receive_special: (special: SpecialType) => void;
   player_lost: (playerId: string) => void;
-  game_over: (data: {winner: string | null}) => void;
+  player_team_updated: (data: {playerId: string, team: TeamColor}) => void;
+  game_over: (data: {winner: string | null, winnerTeam?: TeamColor}) => void;
   chat_message: (data: {playerName: string, message: string, timestamp: number}) => void;
   error: (message: string) => void;
 }

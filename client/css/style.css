@@ -31,6 +31,27 @@ body {
   background-position: center center;
 }
 
+.btn-sound-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 8px 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.btn-sound-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px var(--neon-cyan);
+}
+
 h1, h2, h3, .neon-title, .stat-label {
   font-family: 'Orbitron', sans-serif;
 }

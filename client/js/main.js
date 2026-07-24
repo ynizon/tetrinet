@@ -142,7 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (data.playerId === myId) return; // Our own board is handled by GameManager
+    // If the board update is for ourselves (e.g. after a switchField), update local game state
+    if (data.playerId === myId) {
+      if (gameManager && gameManager.isAlive) {
+        gameManager.board = data.board;
+      }
+      return;
+    }
 
     if (!opponentRenderers.has(data.playerId)) {
       // Late-join: create the board dynamically
@@ -161,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('receive_garbage', (lines) => {
     if (gameManager && gameManager.isAlive) {
       gameManager.addGarbage(lines);
+      SoundManager.play('garbage');
       ui.showNotification(`+${lines} garbage line${lines > 1 ? 's' : ''}!`, 'warning');
     }
   });
@@ -170,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const board = TetrisEngine.applySpecial(gameManager.board, special);
       gameManager.board = board;
       socket.sendBoardUpdate({ board: gameManager.board, score: gameManager.score, level: gameManager.level, lines: gameManager.lines });
+      SoundManager.play('special');
       const specialDef = CONFIG.SPECIALS[special];
       const specialName = specialDef ? specialDef.name : special;
       ui.showNotification(`Pouvoir reçu : ${specialName} !`, 'warning');
@@ -261,6 +269,18 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.showScreen('lobby');
     socket.requestRooms(rooms => ui.updateRoomsList(rooms, joinRoomById));
   });
+
+  // ─────────────────────────────────────────────
+  // MUTE / SOUND TOGGLE BUTTON
+  // ─────────────────────────────────────────────
+  const btnToggleSound = document.getElementById('btn-toggle-sound');
+  if (btnToggleSound) {
+    btnToggleSound.addEventListener('click', () => {
+      const isMuted = SoundManager.toggleMute();
+      btnToggleSound.textContent = isMuted ? '🔇' : '🔊';
+      btnToggleSound.title = isMuted ? 'Activer le son' : 'Désactiver le son';
+    });
+  }
 
   // ─────────────────────────────────────────────
   // KEYBOARD (game controls)

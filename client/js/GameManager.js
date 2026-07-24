@@ -38,6 +38,8 @@ class GameManager {
     this.level = startLevel;
     this.gameStarted = true;
     
+    SoundManager.startMusic();
+
     this.nextPiece = this.generatePiece();
     this.spawnPiece();
     
@@ -73,6 +75,7 @@ class GameManager {
     if (TetrisEngine.canPlace(this.board, this.currentPiece.shape, this.currentPiece.row, this.currentPiece.col + dc)) {
       this.currentPiece.col += dc;
       this.clearLockTimer();
+      SoundManager.play('move');
     }
   }
 
@@ -107,16 +110,19 @@ class GameManager {
       this.currentPiece.rotIndex = newRot;
       this.currentPiece.shape = newShape;
       this.clearLockTimer();
+      SoundManager.play('rotate');
     }
   }
 
   lockPiece() {
     this.board = TetrisEngine.placePiece(this.board, this.currentPiece.shape, this.currentPiece.row, this.currentPiece.col, TetrisEngine.PIECES[this.currentPiece.type].color);
+    SoundManager.play('drop');
     
     const result = TetrisEngine.clearLines(this.board);
     this.board = result.newBoard;
 
     if (result.linesCleared > 0) {
+      SoundManager.play('clear');
       this.lines += result.linesCleared;
       this.score += TetrisEngine.calculateScore(result.linesCleared, this.level);
       this.level = Math.floor(this.lines / 10);
@@ -226,6 +232,7 @@ class GameManager {
     const specialType = specialDef ? specialDef.type : 'neutral';
 
     this.specials.shift(); // consume first special
+    SoundManager.play('special');
 
     if (targetIndex === 0 || targetId === this.myId) {
       // Self-target (positive/neutral only)
@@ -273,10 +280,13 @@ class GameManager {
   stopLoop() {
     this.isAlive = false;
     this.gameStarted = false;
+    SoundManager.stopMusic();
   }
 
   gameOver() {
     this.isAlive = false;
+    SoundManager.stopMusic();
+    SoundManager.play('gameover');
     this.socket.sendPlayerLost(this.board);
     this.ui.showDeadOverlay();
   }

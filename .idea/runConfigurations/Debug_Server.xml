@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Debug Server" type="NodeJSConfigurationType" path-to-js-file="src/index.ts" working-dir="$PROJECT_DIR$/server">
+    <exec-path path="node" />
+    <node-options value="-r ts-node/register" />
+    <method v="2" />
+  </configuration>
+</component>
