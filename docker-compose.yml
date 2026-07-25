@@ -1,0 +1,10 @@
+services:
+  tetrinet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tetrinet
+    ports:
+      - "${PORT:-80}:3000"
+    restart: unless-stopped
+

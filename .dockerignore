@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+
+# Dependencies (reinstalled in Docker)
+server/node_modules
+server/dist
+
+# Docs
+README.md
+LICENSE
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
