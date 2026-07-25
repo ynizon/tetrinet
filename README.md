@@ -71,6 +71,29 @@ For development with automatic restarts on file changes:
 npm run dev
 ```
 
+### 🐳 Docker deployment
+
+The easiest way to deploy TetriNET in production.
+
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
+
+```bash
+# Build and start (accessible on http://localhost)
+docker compose up -d --build
+
+# View logs
+docker compose logs -f
+
+# Stop
+docker compose down
+```
+
+To use a custom port (e.g. 8080):
+
+```bash
+PORT=8080 docker compose up -d --build
+```
+
 ---
 
 ## 🎮 How to Play
@@ -162,7 +185,7 @@ Game constants can be adjusted in [`client/js/config.js`](client/js/config.js):
 | `LOCK_DELAY` | 500 | Lock delay in ms |
 | `GRAVITY` | [800...100] | Drop speed per level (ms) |
 
-Server port defaults to **3000** and can be changed via the `PORT` environment variable:
+Server port defaults to **3000** (or **80** with Docker) and can be changed via the `PORT` environment variable:
 
 ```bash
 PORT=8080 npm start
