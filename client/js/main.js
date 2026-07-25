@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const specialDef = CONFIG.SPECIALS[special];
       const specialName = specialDef ? specialDef.name : special;
       ui.showNotification(`Pouvoir reçu : ${specialName} !`, 'warning');
+      //ui.addChatMessage('game-chat-messages', data.playerName, data.message, data.timestamp);
     }
   });
 

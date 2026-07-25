@@ -227,7 +227,7 @@ class UI {
     scoreList.innerHTML = '';
     scores.forEach((s, i) => {
       const li = document.createElement('li');
-      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
       const linesText = s.lines !== undefined ? ` (${s.lines} line${s.lines > 1 ? 's' : ''})` : '';
       li.innerHTML = `<span class="medal">${medal}</span> <span>${this._escape(s.name)}</span> <span class="final-score">${(s.score || 0).toLocaleString()} pts${linesText}</span>`;
       scoreList.appendChild(li);

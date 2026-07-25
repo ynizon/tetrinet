@@ -29,7 +29,7 @@ const CONFIG = {
     nuke:          { name: '💥 Nuke',             type: 'positive' },
     randomClear:   { name: '🎲 Random Clear',     type: 'negative' },
     switchField:   { name: '🔄 Switch Field',     type: 'neutral'  },
-    clearSpecials: { name: '🛡️ Clear Specials',   type: 'positive' },
+    clearSpecials: { name: '🛡️ Clear Specials',   type: 'negative' },
     blockBomb:     { name: '💣 Block Bomb',        type: 'negative' },
     blockQuake:    { name: '🌊 Quake',             type: 'negative' },
     blockGravity:  { name: '⬇️ Gravity',          type: 'positive' },
@@ -54,7 +54,7 @@ const CONFIG = {
   },
   GRAVITY: [800, 720, 630, 550, 470, 380, 300, 220, 130, 100], // ms per drop per level
   LOCK_DELAY: 500, // ms after landing before locking
-  MAX_SPECIALS: 5,
+  MAX_SPECIALS: 20,
   LINES_PER_SPECIAL: 3, // clear 3 lines to earn 1 special
   SERVER_URL: window.location.origin, // For Socket.io
 };

@@ -269,8 +269,6 @@ class GameManager {
     else if (key === '4' || key === "'" || code === 'Digit4' || code === 'Numpad4') this.useSpecialOnTarget(3);
     else if (key === '5' || key === '(' || code === 'Digit5' || code === 'Numpad5') this.useSpecialOnTarget(4);
     else if (key === '6' || key === '-' || code === 'Digit6' || code === 'Numpad6') this.useSpecialOnTarget(5);
-    // Add S key for screen exchange (switchField special)
-    else if (key === 's' || key === 'S') this.useSpecialOnTarget(1);
   }
 
   addGarbage(lines) {
