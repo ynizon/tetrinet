@@ -29,7 +29,7 @@ io.on('connection', (socket) => {
     let currentRoomId: string | null = null;
 
     socket.on('join_room', (data, callback) => {
-        const { roomId, playerName } = data;
+        const { roomId, playerName, team } = data;
         
         let room = rooms.get(roomId);
         if (!room) {
@@ -42,6 +42,7 @@ io.on('connection', (socket) => {
         }
 
         const player = new Player(socket.id, playerName);
+        if (team) player.team = team;
         if (!room.addPlayer(player)) {
             return callback(false, 'Room is full');
         }
@@ -53,7 +54,15 @@ io.on('connection', (socket) => {
         callback(true);
         socket.emit('room_joined', { room: room.getState(), playerId: socket.id });
 
-        console.log(`[${new Date().toISOString()}] ${playerName} joined room ${roomId}`);
+        console.log(`[${new Date().toISOString()}] ${playerName} joined room ${roomId} (Team: ${player.team})`);
+    });
+
+    socket.on('set_team', (team) => {
+        if (!currentRoomId) return;
+        const room = rooms.get(currentRoomId);
+        if (room && !room.gameStarted) {
+            room.setPlayerTeam(socket.id, team, io);
+        }
     });
 
     socket.on('start_game', () => {

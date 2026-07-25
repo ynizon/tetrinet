@@ -22,27 +22,48 @@ class GameManager {
     this.dropTimer = null;
     this.lastTime = 0;
     this.dropAccumulator = 0;
-    // introduce lock delay handling
     this.lockDelay = 200; // milliseconds
     this.lockTimer = null;
-    // TetriNET targeting: ordered list of [myId, opp1, opp2, ...]
     this.myId = null;
-    // Track alive players (including self)
-    // this.alivePlayers = new Set();
-    // this.alivePlayers.add(this.myId);
+
+    if (this.ui) {
+      this.ui.updateSpecialsQueue(this.specials, [], null);
+    }
   }
 
   startGame(seed, startLevel) {
     this.reset();
     this.rng = TetrisEngine.createRNG(seed);
     this.level = startLevel;
+    this.isCountingDown = true;
     this.gameStarted = true;
     
     SoundManager.startMusic();
 
     this.nextPiece = this.generatePiece();
-    this.spawnPiece();
     
+    // Start 3-2-1-GO Countdown sequence
+    let count = 3;
+    this.ui.showCountdownText(count);
+    SoundManager.play('move');
+
+    const countdownInterval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        this.ui.showCountdownText(count);
+        SoundManager.play('move');
+      } else if (count === 0) {
+        this.ui.showCountdownText('GO!');
+        SoundManager.play('drop');
+      } else {
+        clearInterval(countdownInterval);
+        this.ui.hideCountdown();
+        this.isCountingDown = false;
+        this.spawnPiece();
+        this.lastTime = performance.now();
+      }
+    }, 800);
+
     this.lastTime = performance.now();
     requestAnimationFrame((t) => this.loop(t));
   }
@@ -106,17 +127,59 @@ class GameManager {
     const def = TetrisEngine.PIECES[this.currentPiece.type];
     const newRot = (this.currentPiece.rotIndex + 1) % def.shapes.length;
     const newShape = def.shapes[newRot];
-    if (TetrisEngine.canPlace(this.board, newShape, this.currentPiece.row, this.currentPiece.col)) {
-      this.currentPiece.rotIndex = newRot;
-      this.currentPiece.shape = newShape;
-      this.clearLockTimer();
-      SoundManager.play('rotate');
+    
+    // Wall-kick & Ceiling-kick offsets to try (dx, dy)
+    // Allows shifting left, right, down, or up (into top 3 buffer rows) if blocked
+    const kickOffsets = [
+      [0, 0],   // Normal
+      [-1, 0],  // Left 1
+      [1, 0],   // Right 1
+      [-2, 0],  // Left 2
+      [2, 0],   // Right 2
+      [0, 1],   // Down 1
+      [0, -1],  // Up 1
+      [-1, 1],  // Left 1, Down 1
+      [1, 1],   // Right 1, Down 1
+      [-1, -1], // Left 1, Up 1
+      [1, -1],  // Right 1, Up 1
+    ];
+
+    for (const [dc, dr] of kickOffsets) {
+      const testRow = this.currentPiece.row + dr;
+      const testCol = this.currentPiece.col + dc;
+      if (TetrisEngine.canPlace(this.board, newShape, testRow, testCol)) {
+        this.currentPiece.rotIndex = newRot;
+        this.currentPiece.shape = newShape;
+        this.currentPiece.row = testRow;
+        this.currentPiece.col = testCol;
+        this.clearLockTimer();
+        SoundManager.play('rotate');
+        return;
+      }
     }
   }
 
   lockPiece() {
+    // Check if any part of the locked piece is outside/above row 0 (touching ceiling)
+    let isAboveTop = false;
+    const shape = this.currentPiece.shape;
+    for (let r = 0; r < shape.length; r++) {
+      for (let c = 0; c < shape[r].length; c++) {
+        if (shape[r][c] !== 0) {
+          if (this.currentPiece.row + r < 0) {
+            isAboveTop = true;
+          }
+        }
+      }
+    }
+
     this.board = TetrisEngine.placePiece(this.board, this.currentPiece.shape, this.currentPiece.row, this.currentPiece.col, TetrisEngine.PIECES[this.currentPiece.type].color);
     SoundManager.play('drop');
+
+    if (isAboveTop) {
+      this.gameOver();
+      return;
+    }
     
     const result = TetrisEngine.clearLines(this.board);
     this.board = result.newBoard;
@@ -127,12 +190,16 @@ class GameManager {
       this.score += TetrisEngine.calculateScore(result.linesCleared, this.level);
       this.level = Math.floor(this.lines / 10);
 
-      // Collect special blocks ONLY from cleared lines that contain special blocks
+      // Collect special blocks from cleared lines, multiplied by linesCleared (Double x2, Triple x3, Tetris x4)
       if (result.specialsFound && result.specialsFound.length > 0) {
         result.specialsFound.forEach(cellVal => {
           const sName = CONFIG.LETTER_TO_SPECIAL[cellVal];
-          if (sName && this.specials.length < CONFIG.MAX_SPECIALS) {
-            this.specials.push(sName);
+          if (sName) {
+            for (let i = 0; i < result.linesCleared; i++) {
+              if (this.specials.length < CONFIG.MAX_SPECIALS) {
+                this.specials.push(sName);
+              }
+            }
           }
         });
       }
@@ -169,12 +236,15 @@ class GameManager {
     
     const deltaTime = time - this.lastTime;
     this.lastTime = time;
-    this.dropAccumulator += deltaTime;
-    
-    const dropInterval = CONFIG.GRAVITY[Math.min(this.level, 9)];
-    if (this.dropAccumulator > dropInterval) {
-      this.dropPiece();
-      this.dropAccumulator = 0;
+
+    if (!this.isCountingDown) {
+      this.dropAccumulator += deltaTime;
+      
+      const dropInterval = CONFIG.GRAVITY[Math.min(this.level, 9)];
+      if (this.dropAccumulator > dropInterval) {
+        this.dropPiece();
+        this.dropAccumulator = 0;
+      }
     }
     
     this.render();
@@ -227,6 +297,11 @@ class GameManager {
     }
 
     const special = this.specials[0]; // peek first special
+    if (special === 'switchField' && (targetIndex === 0 || targetId === this.myId)) {
+      this.ui.showNotification(`Impossible de s'envoyer un Switch Field sur soi-même !`, 'warning');
+      return;
+    }
+
     const specialDef = CONFIG.SPECIALS[special];
     const specialName = specialDef ? specialDef.name : special;
     const specialType = specialDef ? specialDef.type : 'neutral';
@@ -235,7 +310,7 @@ class GameManager {
     SoundManager.play('special');
 
     if (targetIndex === 0 || targetId === this.myId) {
-      // Self-target (positive/neutral only)
+      // Self-target
       this.board = TetrisEngine.applySpecial(this.board, special);
       this.socket.sendBoardUpdate({ board: this.board, score: this.score, level: this.level, lines: this.lines });
       this.ui.showNotification(`Utilisé sur soi : ${specialName}`, 'info');
@@ -243,7 +318,9 @@ class GameManager {
       // Opponent target
       this.socket.useSpecial({ special, targetId });
       const notifType = specialType === 'negative' ? 'warning' : 'success';
-      this.ui.showNotification(`Envoyé ${specialName} à la cible !`, notifType);
+      let msg = `Envoyé ${specialName} à la cible !`;
+      this.ui.showNotification(msg, notifType);
+      this.socket.sendChat(msg);
     }
 
     // Refresh the specials display
@@ -252,7 +329,7 @@ class GameManager {
   }
 
   handleKeyDown(e) {
-    if (!this.gameStarted || !this.isAlive) return;
+    if (!this.gameStarted || !this.isAlive || this.isCountingDown) return;
 
     const key = e.key;
     const code = e.code || '';

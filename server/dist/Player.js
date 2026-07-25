@@ -12,6 +12,7 @@ class Player {
         this.lines = 0;
         this.isAlive = true;
         this.specials = [];
+        this.team = 'none';
     }
     /**
      * Gets the current state of the player.
@@ -25,7 +26,8 @@ class Player {
             level: this.level,
             lines: this.lines,
             isAlive: this.isAlive,
-            specials: [...this.specials]
+            specials: [...this.specials],
+            team: this.team
         };
     }
     /**

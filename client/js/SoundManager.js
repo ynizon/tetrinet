@@ -4,6 +4,8 @@
 class SoundEngine {
   constructor() {
     this.muted = false;
+    this.musicVolume = 0.5;
+    this.sfxVolume = 0.7;
     this.sounds = {};
 
     // Définition des sons du jeu et de leurs chemins
@@ -20,7 +22,7 @@ class SoundEngine {
     // Musique de fond
     this.bgMusic = new Audio('assets/audio/tetris.mp3');
     this.bgMusic.loop = true;
-    this.bgMusic.volume = 0.5;
+    this.bgMusic.volume = this.musicVolume;
 
     this.init();
   }
@@ -30,7 +32,24 @@ class SoundEngine {
     for (const [name, path] of Object.entries(this.soundPaths)) {
       const audio = new Audio(path);
       audio.preload = 'auto';
+      audio.volume = this.sfxVolume;
       this.sounds[name] = audio;
+    }
+  }
+
+  setMusicVolume(val) {
+    this.musicVolume = parseFloat(val);
+    if (this.bgMusic) {
+      this.bgMusic.volume = this.musicVolume;
+    }
+  }
+
+  setSfxVolume(val) {
+    this.sfxVolume = parseFloat(val);
+    for (const sound of Object.values(this.sounds)) {
+      if (sound) {
+        sound.volume = this.sfxVolume;
+      }
     }
   }
 
@@ -39,6 +58,7 @@ class SoundEngine {
    */
   startMusic() {
     if (this.muted) return;
+    this.bgMusic.volume = this.musicVolume;
     this.bgMusic.currentTime = 0;
     this.bgMusic.play().catch(() => {
       // Ignorer l'erreur d'autoplay navigateur
@@ -61,6 +81,7 @@ class SoundEngine {
     if (this.muted) return;
     const sound = this.sounds[soundName];
     if (sound) {
+      sound.volume = this.sfxVolume;
       sound.currentTime = 0;
       sound.play().catch(() => {});
     }

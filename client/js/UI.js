@@ -60,14 +60,28 @@ class UI {
   updatePlayersList(players, hostId, myId) {
     const list = document.getElementById('waiting-player-list');
     list.innerHTML = '';
+    const teamLabels = {
+      none: 'Solo', red: '🔴 Rouge', blue: '🔵 Bleue', green: '🟢 Verte', yellow: '🟡 Jaune'
+    };
     players.forEach(p => {
       const li = document.createElement('li');
       const badges = [];
+      if (p.team && p.team !== 'none') {
+        badges.push(`<span class="badge team-badge team-${p.team}">${teamLabels[p.team] || p.team}</span>`);
+      }
       if (p.id === hostId) badges.push('<span class="badge host-badge">HOST</span>');
       if (p.id === myId) badges.push('<span class="badge you-badge">YOU</span>');
-      li.innerHTML = `<span class="player-dot"></span><span class="player-name">${p.name}</span>${badges.join('')}`;
+      li.innerHTML = `<span class="player-dot"></span><span class="player-name">${this._escape(p.name)}</span>${badges.join('')}`;
       list.appendChild(li);
     });
+
+    const me = players.find(p => p.id === myId);
+    if (me) {
+      const selectWaiting = document.getElementById('select-team-waiting');
+      if (selectWaiting && selectWaiting.value !== me.team) {
+        selectWaiting.value = me.team || 'none';
+      }
+    }
   }
 
   /** Show or hide the Start Game button based on host status */
@@ -205,6 +219,24 @@ class UI {
     if (el) el.classList.add('hidden');
   }
 
+  showCountdownText(text) {
+    const overlay = document.getElementById('countdown-overlay');
+    const textEl = document.getElementById('countdown-text');
+    if (overlay && textEl) {
+      overlay.classList.remove('hidden');
+      textEl.textContent = text;
+      // Restart CSS animation
+      textEl.style.animation = 'none';
+      void textEl.offsetWidth; // trigger reflow
+      textEl.style.animation = 'countdownPulse 0.5s ease-out';
+    }
+  }
+
+  hideCountdown() {
+    const overlay = document.getElementById('countdown-overlay');
+    if (overlay) overlay.classList.add('hidden');
+  }
+
   // ─────────────────────────────────────────────
   // GAME OVER
   // ─────────────────────────────────────────────
@@ -213,11 +245,16 @@ class UI {
    * Display the game over screen.
    * @param {string|null} winnerName
    * @param {Array} scores - [{name, score}]
+   * @param {string} [winnerTeam]
    */
-  showGameOver(winnerName, scores) {
+  showGameOver(winnerName, scores, winnerTeam) {
     this.showScreen('gameover');
     const winEl = document.getElementById('gameover-winner');
-    if (winnerName) {
+    const teamLabels = { red: '🔴 Équipe Rouge', blue: '🔵 Équipe Bleue', green: '🟢 Équipe Verte', yellow: '🟡 Équipe Jaune' };
+
+    if (winnerTeam) {
+      winEl.innerHTML = `🏆 <span class="winner-name">${teamLabels[winnerTeam] || winnerTeam}</span> WINS!`;
+    } else if (winnerName) {
       winEl.innerHTML = `🏆 <span class="winner-name">${this._escape(winnerName)}</span> WINS!`;
     } else {
       winEl.textContent = 'Draw - No Winner';

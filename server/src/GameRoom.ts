@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import { Player } from './Player';
-import { Board, RoomState, RoomSummary, SpecialType, ServerToClientEvents, ClientToServerEvents } from './types';
+import { Board, RoomState, RoomSummary, SpecialType, TeamColor, ServerToClientEvents, ClientToServerEvents } from './types';
 import { TetrisEngine } from './TetrisEngine';
 
 export class GameRoom {
@@ -102,6 +102,9 @@ export class GameRoom {
         if (!player) return;
 
         if (special === 'switchField' && targetId) {
+            // Cannot target oneself with switchField
+            if (targetId === playerId) return;
+
             const target = this.players.get(targetId);
             if (target && target.isAlive) {
                 // Duplicate current player board and target board into temporary variables (deep copy)
@@ -112,6 +115,31 @@ export class GameRoom {
                 player.board = tempTargetBoard;
                 target.board = tempPlayerBoard;
                 
+                // Helper function to calculate board filled height / percentage
+                const getBoardFilledRows = (b: Board): number => {
+                    let filledCount = 0;
+                    for (let r = 0; r < b.length; r++) {
+                        if (b[r].some(cell => cell !== 0)) {
+                            filledCount++;
+                        }
+                    }
+                    return filledCount;
+                };
+
+                const maxAllowedRows = Math.floor(TetrisEngine.ROWS * 0.75); // 75% of 22 = 16 rows
+
+                // Check if player's new board exceeds 75% height threshold
+                if (getBoardFilledRows(player.board) > maxAllowedRows) {
+                    player.die();
+                    io.to(this.id).emit('player_lost', player.id);
+                }
+
+                // Check if target's new board exceeds 75% height threshold
+                if (getBoardFilledRows(target.board) > maxAllowedRows) {
+                    target.die();
+                    io.to(this.id).emit('player_lost', target.id);
+                }
+
                 io.to(this.id).emit('board_update', {
                     playerId: player.id,
                     board: player.board,
@@ -126,12 +154,29 @@ export class GameRoom {
                     level: target.level,
                     lines: target.lines
                 });
+
+                // Broadcast chat notification for switchField
+                const specialName = '🔄 Switch Field';
+                io.to(this.id).emit('chat_message', {
+                    playerName: '⚡ System',
+                    message: `${player.name} a échangé son terrain avec ${target.name} !`,
+                    timestamp: Date.now()
+                });
+
+                this.checkGameOver(io);
             }
         } else if (targetId) {
             const target = this.players.get(targetId);
             if (target && target.isAlive) {
                 target.receiveSpecial(special, TetrisEngine);
-                io.to(targetId).emit('receive_special', special);
+                io.to(targetId).emit('receive_special', {
+                    special,
+                    senderId: player.id,
+                    senderName: player.name
+                });
+
+
+
                 // Also broadcast the target's new board to everyone in the room immediately
                 io.to(this.id).emit('board_update', {
                     playerId: target.id,
@@ -141,6 +186,17 @@ export class GameRoom {
                     lines: target.lines
                 });
             }
+        }
+    }
+
+    /**
+     * Handles setting a player's team.
+     */
+    setPlayerTeam(playerId: string, team: TeamColor, io: Server<ClientToServerEvents, ServerToClientEvents>): void {
+        const player = this.players.get(playerId);
+        if (player) {
+            player.team = team;
+            io.to(this.id).emit('player_team_updated', { playerId, team });
         }
     }
 
@@ -157,32 +213,44 @@ export class GameRoom {
     }
 
     /**
-     * Checks if only one or no players are left alive.
+     * Checks if all remaining alive players belong to the same team or solo player.
      */
     checkGameOver(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
         if (!this.gameStarted) return;
         
-        let aliveCount = 0;
-        let lastAliveId: string | null = null;
-        
-        for (const [id, player] of this.players.entries()) {
-            if (player.isAlive) {
-                aliveCount++;
-                lastAliveId = id;
-            }
-        }
+        const alivePlayers = Array.from(this.players.values()).filter(p => p.isAlive);
 
-        if (aliveCount <= 1 && this.players.size > 1) {
-            this.gameStarted = false;
-            io.to(this.id).emit('game_over', { winner: lastAliveId });
-            // Reset all players for a fresh game, including clearing stored specials
-            for (const p of this.players.values()) {
-                p.reset();
-            }
-        } else if (aliveCount === 0 && this.players.size === 1) {
+        if (alivePlayers.length === 0) {
             this.gameStarted = false;
             io.to(this.id).emit('game_over', { winner: null });
-            // Reset the sole player as well
+            for (const p of this.players.values()) p.reset();
+            return;
+        }
+
+        // Check if all alive players belong to the exact same team
+        // (Note: 'none' team means solo mode for that player, which is unique to them unless they are on a colored team)
+        const firstTeam = alivePlayers[0].team;
+        let isTeamVictory = false;
+
+        if (firstTeam !== 'none') {
+            // All alive players are on the same colored team (e.g. 'red', 'blue', etc.)
+            isTeamVictory = alivePlayers.every(p => p.team === firstTeam);
+        } else {
+            // Solo mode: victory if only 1 player remains alive overall
+            isTeamVictory = (alivePlayers.length === 1);
+        }
+
+        // Check if victory condition met (and total room size > 1)
+        if (isTeamVictory && this.players.size > 1) {
+            this.gameStarted = false;
+            const winningTeam = firstTeam !== 'none' ? firstTeam : undefined;
+            const winnerId = alivePlayers.length === 1 ? alivePlayers[0].id : null;
+            
+            io.to(this.id).emit('game_over', { 
+                winner: winnerId, 
+                winnerTeam: winningTeam 
+            });
+
             for (const p of this.players.values()) {
                 p.reset();
             }

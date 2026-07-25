@@ -185,15 +185,34 @@ class TetrisEngine {
                 break;
             case 'blockGravity':
                 for (let c = 0; c < this.COLS; c++) {
-                    let writeR = this.ROWS - 1;
-                    for (let r = this.ROWS - 1; r >= 0; r--) {
+                    const colCells = [];
+                    for (let r = 0; r < this.ROWS; r++) {
                         if (newBoard[r][c] !== 0) {
-                            const val = newBoard[r][c];
-                            newBoard[r][c] = 0;
-                            newBoard[writeR][c] = val;
-                            writeR--;
+                            colCells.push(newBoard[r][c]);
                         }
                     }
+                    let writeR = this.ROWS - 1;
+                    for (let i = colCells.length - 1; i >= 0; i--) {
+                        newBoard[writeR][c] = colCells[i];
+                        writeR--;
+                    }
+                    while (writeR >= 0) {
+                        newBoard[writeR][c] = 0;
+                        writeR--;
+                    }
+                }
+                const clearedRows = [];
+                for (let r = 0; r < this.ROWS; r++) {
+                    if (newBoard[r].every(cell => cell !== 0)) {
+                        clearedRows.push(r);
+                    }
+                }
+                if (clearedRows.length > 0) {
+                    const filteredBoard = newBoard.filter((_, idx) => !clearedRows.includes(idx));
+                    while (filteredBoard.length < this.ROWS) {
+                        filteredBoard.unshift(Array(this.COLS).fill(0));
+                    }
+                    newBoard = filteredBoard;
                 }
                 break;
             case 'switchField':

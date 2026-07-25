@@ -28,7 +28,8 @@ class TetrisEngine {
         if (shape[r][c] !== 0) {
           let newRow = row + r;
           let newCol = col + c;
-          if (newCol < 0 || newCol >= CONFIG.BOARD_WIDTH || newRow >= CONFIG.BOARD_HEIGHT) return false;
+          // Allow up to 3 invisible rows above top boundary (row >= -3)
+          if (newCol < 0 || newCol >= CONFIG.BOARD_WIDTH || newRow >= CONFIG.BOARD_HEIGHT || newRow < -3) return false;
           if (newRow >= 0 && board[newRow][newCol] !== 0) return false;
         }
       }
@@ -120,7 +121,7 @@ class TetrisEngine {
           }
         }
         break;
-      case 'blockBomb':
+      case 'blockBomb': {
         // Explosive block bomb: explodes any 'O' or 'N' special blocks on field or clears 3x3 area
         let bombPositions = [];
         for (let r = 0; r < CONFIG.BOARD_HEIGHT; r++) {
@@ -151,6 +152,7 @@ class TetrisEngine {
           }
         });
         break;
+      }
       case 'blockQuake':
         newBoard = newBoard.map(row => {
           const shift = Math.floor(Math.random() * 3) - 1;
@@ -165,19 +167,42 @@ class TetrisEngine {
           return newRow;
         });
         break;
-      case 'blockGravity':
+      case 'blockGravity': {
+        // Pull all non-zero blocks down column by column
         for (let c = 0; c < CONFIG.BOARD_WIDTH; c++) {
-          let writeR = CONFIG.BOARD_HEIGHT - 1;
-          for (let r = CONFIG.BOARD_HEIGHT - 1; r >= 0; r--) {
+          const colCells = [];
+          for (let r = 0; r < CONFIG.BOARD_HEIGHT; r++) {
             if (newBoard[r][c] !== 0) {
-              const val = newBoard[r][c];
-              newBoard[r][c] = 0;
-              newBoard[writeR][c] = val;
-              writeR--;
+              colCells.push(newBoard[r][c]);
             }
           }
+          let writeR = CONFIG.BOARD_HEIGHT - 1;
+          for (let i = colCells.length - 1; i >= 0; i--) {
+            newBoard[writeR][c] = colCells[i];
+            writeR--;
+          }
+          while (writeR >= 0) {
+            newBoard[writeR][c] = 0;
+            writeR--;
+          }
+        }
+
+        // Automatically clear any full lines resulting from gravity
+        const clearedRows = [];
+        for (let r = 0; r < CONFIG.BOARD_HEIGHT; r++) {
+          if (newBoard[r].every(cell => cell !== 0)) {
+            clearedRows.push(r);
+          }
+        }
+        if (clearedRows.length > 0) {
+          const filteredBoard = newBoard.filter((_, idx) => !clearedRows.includes(idx));
+          while (filteredBoard.length < CONFIG.BOARD_HEIGHT) {
+            filteredBoard.unshift(Array(CONFIG.BOARD_WIDTH).fill(0));
+          }
+          newBoard = filteredBoard;
         }
         break;
+      }
     }
     return newBoard;
   }
@@ -208,9 +233,42 @@ class TetrisEngine {
 
             if (candidates.length > 0) {
                 const target = candidates[Math.floor(Math.random() * candidates.length)];
-                const specialCodes = Object.keys(CONFIG.SPECIAL_LETTERS).map(Number);
-                const randomCode = specialCodes[Math.floor(Math.random() * specialCodes.length)];
-                newBoard[target.r][target.c] = randomCode;
+                
+                // Distribution weight table matching requested frequencies:
+                // 10: Add Line (16%)
+                // 11: Clear Line (16%)
+                // 15: Clear Special Blocks (14%)
+                // 13: Random Blocks Clear (14%)
+                // 17: Blockquake (14%)
+                // 18: Block Gravity (10%)
+                // 16: Block Bomb (10%)
+                // 14: Switch Fields (3%)
+                // 12: Nuke Field (3%)
+                const weightedSpecials = [
+                    { code: 10, weight: 16 },
+                    { code: 11, weight: 16 },
+                    { code: 15, weight: 14 },
+                    { code: 13, weight: 14 },
+                    { code: 17, weight: 14 },
+                    { code: 18, weight: 10 },
+                    { code: 16, weight: 10 },
+                    { code: 14, weight: 3 },
+                    { code: 12, weight: 3 }
+                ];
+                
+                const totalWeight = weightedSpecials.reduce((sum, item) => sum + item.weight, 0); // 100
+                let rand = Math.random() * totalWeight;
+                let selectedCode = weightedSpecials[0].code;
+                
+                for (const item of weightedSpecials) {
+                    if (rand < item.weight) {
+                        selectedCode = item.code;
+                        break;
+                    }
+                    rand -= item.weight;
+                }
+                
+                newBoard[target.r][target.c] = selectedCode;
             }
         }
 

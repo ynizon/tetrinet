@@ -37,7 +37,7 @@ export interface RoomSummary {
 }
 
 export interface ClientToServerEvents {
-  join_room: (data: {roomId: string, playerName: string}, callback: (ok: boolean, err?: string) => void) => void;
+  join_room: (data: {roomId: string, playerName: string, team?: TeamColor}, callback: (ok: boolean, err?: string) => void) => void;
   set_team: (team: TeamColor) => void;
   start_game: () => void;
   board_update: (data: {board: Board, score: number, level: number, lines: number}) => void;
@@ -56,7 +56,7 @@ export interface ServerToClientEvents {
   game_started: (data: {seed: number, startLevel: number}) => void;
   board_update: (data: {playerId: string, board: Board, score: number, level: number, lines: number}) => void;
   receive_garbage: (lines: number) => void;
-  receive_special: (special: SpecialType) => void;
+  receive_special: (data: {special: SpecialType, senderId: string, senderName: string}) => void;
   player_lost: (playerId: string) => void;
   player_team_updated: (data: {playerId: string, team: TeamColor}) => void;
   game_over: (data: {winner: string | null, winnerTeam?: TeamColor}) => void;

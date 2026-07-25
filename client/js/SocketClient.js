@@ -7,7 +7,7 @@ class SocketClient {
     [
       'room_joined', 'rooms_list', 'player_joined', 'player_left',
       'game_started', 'board_update', 'receive_garbage', 'receive_special',
-      'player_lost', 'game_over', 'chat_message', 'error'
+      'player_lost', 'player_team_updated', 'game_over', 'chat_message', 'error'
     ].forEach(event => {
       this.socket.on(event, (data) => {
         if (this.handlers[event]) this.handlers[event](data);
@@ -19,8 +19,16 @@ class SocketClient {
     this.handlers[event] = handler;
   }
 
-  joinRoom(roomId, playerName, callback) {
-    this.socket.emit('join_room', { roomId, playerName }, callback);
+  joinRoom(roomId, playerName, team, callback) {
+    if (typeof team === 'function') {
+      callback = team;
+      team = 'none';
+    }
+    this.socket.emit('join_room', { roomId, playerName, team }, callback);
+  }
+
+  setTeam(team) {
+    this.socket.emit('set_team', team);
   }
 
   startGame() {

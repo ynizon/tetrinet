@@ -31,11 +31,17 @@ body {
   background-position: center center;
 }
 
-.btn-sound-toggle {
+.sound-controls-container {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.btn-sound-toggle {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   color: #fff;
@@ -50,6 +56,36 @@ body {
 .btn-sound-toggle:hover {
   transform: scale(1.1);
   box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.sound-popover {
+  margin-top: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--neon-cyan);
+}
+
+.slider-group input[type="range"] {
+  accent-color: var(--neon-cyan);
+  cursor: pointer;
+  width: 100%;
 }
 
 h1, h2, h3, .neon-title, .stat-label {
@@ -183,10 +219,19 @@ li {
 .chat-messages {
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   margin-bottom: 1rem;
   font-size: 0.9rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
-.chat-messages p { margin-bottom: 0.25rem; }
+.chat-messages p, .chat-message {
+  margin-bottom: 0.25rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
 .chat-messages .time { color: #555; font-size: 0.75rem; margin-right: 5px; }
 .chat-messages .name { font-weight: bold; color: var(--neon-cyan); margin-right: 5px; }
 
@@ -442,3 +487,37 @@ canvas { display: block; }
 .chat-name { font-weight: bold; color: var(--neon-cyan); }
 .chat-msg  { color: #ddd; }
 .mini-input { margin-top: 4px; font-size: 0.8rem; }
+
+/* Countdown Overlay */
+.countdown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 15, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  border-radius: 8px;
+}
+
+#countdown-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 6rem;
+  font-weight: bold;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
+  animation: countdownPulse 0.5s ease-out;
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(2); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.room-list-container{
+  padding-top:20px;
+}

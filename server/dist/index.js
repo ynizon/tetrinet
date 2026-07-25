@@ -27,7 +27,7 @@ io.on('connection', (socket) => {
     console.log(`[${new Date().toISOString()}] User connected: ${socket.id}`);
     let currentRoomId = null;
     socket.on('join_room', (data, callback) => {
-        const { roomId, playerName } = data;
+        const { roomId, playerName, team } = data;
         let room = rooms.get(roomId);
         if (!room) {
             room = new GameRoom_1.GameRoom(roomId, `Room ${roomId}`, socket.id);
@@ -37,6 +37,8 @@ io.on('connection', (socket) => {
             return callback(false, 'Game already in progress');
         }
         const player = new Player_1.Player(socket.id, playerName);
+        if (team)
+            player.team = team;
         if (!room.addPlayer(player)) {
             return callback(false, 'Room is full');
         }
@@ -45,7 +47,15 @@ io.on('connection', (socket) => {
         socket.to(roomId).emit('player_joined', player.getState());
         callback(true);
         socket.emit('room_joined', { room: room.getState(), playerId: socket.id });
-        console.log(`[${new Date().toISOString()}] ${playerName} joined room ${roomId}`);
+        console.log(`[${new Date().toISOString()}] ${playerName} joined room ${roomId} (Team: ${player.team})`);
+    });
+    socket.on('set_team', (team) => {
+        if (!currentRoomId)
+            return;
+        const room = rooms.get(currentRoomId);
+        if (room && !room.gameStarted) {
+            room.setPlayerTeam(socket.id, team, io);
+        }
     });
     socket.on('start_game', () => {
         if (!currentRoomId)

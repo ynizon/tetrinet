@@ -44,16 +44,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputVal) {
       localStorage.setItem('tetrinet_player_name', inputVal);
     }
+    const teamSelect = document.getElementById('select-team-lobby');
+    const selectedTeam = teamSelect ? teamSelect.value : 'none';
     const roomId = document.getElementById('input-room-id').value.trim() ||
       Math.random().toString(36).substring(2, 8).toUpperCase();
-    joinRoomById(roomId);
+    joinRoomById(roomId, selectedTeam);
   });
 
-  function joinRoomById(roomId) {
-    socket.joinRoom(roomId, myName, (ok, err) => {
+  function joinRoomById(roomId, team = 'none') {
+    socket.joinRoom(roomId, myName, team, (ok, err) => {
       if (!ok) ui.showNotification(err || 'Failed to join room', 'error');
     });
   }
+
+  const selectTeamWaiting = document.getElementById('select-team-waiting');
+  if (selectTeamWaiting) {
+    selectTeamWaiting.addEventListener('change', (e) => {
+      socket.setTeam(e.target.value);
+    });
+  }
+
+  socket.on('player_team_updated', (data) => {
+    if (roomState) {
+      const p = roomState.players.find(player => player.id === data.playerId);
+      if (p) {
+        p.team = data.team;
+        ui.updatePlayersList(roomState.players, roomState.hostId, myId);
+      }
+    }
+  });
 
   // ─────────────────────────────────────────────
   // WAITING ROOM
@@ -127,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gameManager.myId = myId;
     gameManager.targetOrder = targetOrder;
     gameManager.alivePlayers = new Set(targetOrder);
+    ui.updateSpecialsQueue([], targetOrder, myId, (ti) => gameManager.useSpecialOnTarget(ti));
     gameManager.startGame(data.seed, data.startLevel);
   });
 
@@ -172,7 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  socket.on('receive_special', (special) => {
+  socket.on('receive_special', (data) => {
+    const special = typeof data === 'object' && data.special ? data.special : data;
+    const senderName = typeof data === 'object' && data.senderName ? data.senderName : 'un joueur';
     if (gameManager && gameManager.isAlive) {
       const board = TetrisEngine.applySpecial(gameManager.board, special);
       gameManager.board = board;
@@ -180,8 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       SoundManager.play('special');
       const specialDef = CONFIG.SPECIALS[special];
       const specialName = specialDef ? specialDef.name : special;
-      ui.showNotification(`Pouvoir reçu : ${specialName} !`, 'warning');
-      //ui.addChatMessage('game-chat-messages', data.playerName, data.message, data.timestamp);
+      ui.showNotification(`${senderName} vous a envoyé : ${specialName} !`, 'warning');
     }
   });
 
@@ -233,7 +254,26 @@ document.addEventListener('DOMContentLoaded', () => {
       ? (roomState?.players.find(p => p.id === data.winner)?.name || data.winner)
       : null;
 
-    ui.showGameOver(winnerName, finalScores);
+    const isHost = roomState ? roomState.hostId === myId : true;
+    ui.showGameOver(winnerName, finalScores, data.winnerTeam);
+    ui.showStartButton(isHost);
+
+    const btnPlayAgain = document.getElementById('btn-play-again');
+    if (btnPlayAgain) {
+      btnPlayAgain.classList.toggle('hidden', !isHost);
+    }
+  });
+
+  document.getElementById('btn-play-again').addEventListener('click', () => {
+    socket.startGame();
+  });
+
+  document.getElementById('btn-back-lobby').addEventListener('click', () => {
+    if (roomState) {
+      ui.showScreen('waiting');
+    } else {
+      ui.showScreen('lobby');
+    }
   });
 
   // ─────────────────────────────────────────────
@@ -272,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ─────────────────────────────────────────────
-  // MUTE / SOUND TOGGLE BUTTON
+  // MUTE / SOUND TOGGLE & VOLUME SLIDERS
   // ─────────────────────────────────────────────
   const btnToggleSound = document.getElementById('btn-toggle-sound');
   if (btnToggleSound) {
@@ -283,10 +323,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const sliderMusic = document.getElementById('slider-music-volume');
+  if (sliderMusic) {
+    sliderMusic.addEventListener('input', (e) => {
+      SoundManager.setMusicVolume(e.target.value);
+    });
+  }
+
+  const sliderSfx = document.getElementById('slider-sfx-volume');
+  if (sliderSfx) {
+    sliderSfx.addEventListener('input', (e) => {
+      SoundManager.setSfxVolume(e.target.value);
+    });
+  }
+
   // ─────────────────────────────────────────────
   // KEYBOARD (game controls)
   // ─────────────────────────────────────────────
-  document.addEventListener('keydown', (e) => {
+   document.addEventListener('keydown', (e) => {
     // Don't trigger game controls if typing in chat
     if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
       return;
@@ -294,8 +348,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (gameManager) {
       gameManager.handleKeyDown(e);
-      // Prevent arrow keys and space from scrolling the page
-      if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ', '1', '2', '3', '4', '5', '6'].includes(e.key)) {
+      // Prevent browser default actions (scrolling, Firefox quick-find on ', ", etc.)
+      const preventKeys = ['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ',
+        '1', '2', '3', '4', '5', '6', '&', 'é', '"', "'", '(', '-'];
+      const preventCodes = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6',
+        'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6',
+        'Space'];
+      if (preventKeys.includes(e.key) || preventCodes.includes(e.code)) {
         e.preventDefault();
       }
     }
