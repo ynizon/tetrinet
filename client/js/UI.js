@@ -30,7 +30,7 @@ class UI {
     const list = document.getElementById('room-list');
     list.innerHTML = '';
     if (rooms.length === 0) {
-      list.innerHTML = '<li class="no-rooms">No rooms yet. Create one!</li>';
+      list.innerHTML = `<li class="no-rooms">${I18N.t('noRooms')}</li>`;
       return;
     }
     rooms.forEach(room => {
@@ -39,7 +39,7 @@ class UI {
       li.innerHTML = `
         <span class="room-name">${room.id}</span>
         <span class="room-players">${room.playerCount}/${room.maxPlayers}</span>
-        <span class="room-status">${room.gameStarted ? '🔴 In Progress' : '🟢 Open'}</span>
+        <span class="room-status">${room.gameStarted ? I18N.t('roomStatusInProgress') : I18N.t('roomStatusOpen')}</span>
       `;
       if (!room.gameStarted && onJoin) {
         li.style.cursor = 'pointer';
@@ -61,7 +61,11 @@ class UI {
     const list = document.getElementById('waiting-player-list');
     list.innerHTML = '';
     const teamLabels = {
-      none: 'Solo', red: '🔴 Rouge', blue: '🔵 Bleue', green: '🟢 Verte', yellow: '🟡 Jaune'
+      none: I18N.t('teamLabelSolo'),
+      red: I18N.t('teamLabelRed'),
+      blue: I18N.t('teamLabelBlue'),
+      green: I18N.t('teamLabelGreen'),
+      yellow: I18N.t('teamLabelYellow')
     };
     players.forEach(p => {
       const li = document.createElement('li');
@@ -69,8 +73,8 @@ class UI {
       if (p.team && p.team !== 'none') {
         badges.push(`<span class="badge team-badge team-${p.team}">${teamLabels[p.team] || p.team}</span>`);
       }
-      if (p.id === hostId) badges.push('<span class="badge host-badge">HOST</span>');
-      if (p.id === myId) badges.push('<span class="badge you-badge">YOU</span>');
+      if (p.id === hostId) badges.push(`<span class="badge host-badge">${I18N.t('badgeHost')}</span>`);
+      if (p.id === myId) badges.push(`<span class="badge you-badge">${I18N.t('badgeYou')}</span>`);
       li.innerHTML = `<span class="player-dot"></span><span class="player-name">${this._escape(p.name)}</span>${badges.join('')}`;
       list.appendChild(li);
     });
@@ -171,7 +175,7 @@ class UI {
     container.innerHTML = '';
 
     if (specials.length === 0) {
-      container.innerHTML = '<span style="color:#444;font-size:0.7rem;">No specials</span>';
+      container.innerHTML = `<span style="color:#444;font-size:0.7rem;">${I18N.t('noSpecials')}</span>`;
       return;
     }
 
@@ -237,6 +241,24 @@ class UI {
     if (overlay) overlay.classList.add('hidden');
   }
 
+  updatePauseOverlay(paused, playerName) {
+    const overlay = document.getElementById('pause-overlay');
+    const infoEl = document.getElementById('pause-info');
+    const btn = document.getElementById('btn-pause');
+
+    if (overlay) {
+      overlay.classList.toggle('hidden', !paused);
+      if (infoEl && playerName) {
+        infoEl.textContent = I18N.t('pausedBy', { name: playerName });
+      }
+    }
+
+    if (btn) {
+      btn.textContent = paused ? I18N.t('btnResume') : I18N.t('btnPause');
+      btn.classList.toggle('paused', paused);
+    }
+  }
+
   // ─────────────────────────────────────────────
   // GAME OVER
   // ─────────────────────────────────────────────
@@ -250,14 +272,19 @@ class UI {
   showGameOver(winnerName, scores, winnerTeam) {
     this.showScreen('gameover');
     const winEl = document.getElementById('gameover-winner');
-    const teamLabels = { red: '🔴 Équipe Rouge', blue: '🔵 Équipe Bleue', green: '🟢 Équipe Verte', yellow: '🟡 Équipe Jaune' };
+    const teamLabels = {
+      red: I18N.t('teamWinRed'),
+      blue: I18N.t('teamWinBlue'),
+      green: I18N.t('teamWinGreen'),
+      yellow: I18N.t('teamWinYellow')
+    };
 
     if (winnerTeam) {
-      winEl.innerHTML = `🏆 <span class="winner-name">${teamLabels[winnerTeam] || winnerTeam}</span> WINS!`;
+      winEl.innerHTML = `🏆 <span class="winner-name">${teamLabels[winnerTeam] || winnerTeam}</span> ${I18N.t('wins')}`;
     } else if (winnerName) {
-      winEl.innerHTML = `🏆 <span class="winner-name">${this._escape(winnerName)}</span> WINS!`;
+      winEl.innerHTML = `🏆 <span class="winner-name">${this._escape(winnerName)}</span> ${I18N.t('wins')}`;
     } else {
-      winEl.textContent = 'Draw - No Winner';
+      winEl.textContent = I18N.t('drawNoWinner');
     }
 
     const scoreList = document.getElementById('gameover-scores');
@@ -265,8 +292,10 @@ class UI {
     scores.forEach((s, i) => {
       const li = document.createElement('li');
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
-      const linesText = s.lines !== undefined ? ` (${s.lines} line${s.lines > 1 ? 's' : ''})` : '';
-      li.innerHTML = `<span class="medal">${medal}</span> <span>${this._escape(s.name)}</span> <span class="final-score">${(s.score || 0).toLocaleString()} pts${linesText}</span>`;
+      const linesLabel = s.lines !== undefined
+        ? ` (${s.lines} ${s.lines > 1 ? I18N.t('lines') : I18N.t('line')})`
+        : '';
+      li.innerHTML = `<span class="medal">${medal}</span> <span>${this._escape(s.name)}</span> <span class="final-score">${(s.score || 0).toLocaleString()} ${I18N.t('pts')}${linesLabel}</span>`;
       scoreList.appendChild(li);
     });
   }

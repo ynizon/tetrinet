@@ -3,6 +3,9 @@
  * Wires together SocketClient, UI, GameManager, and Renderer
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // Apply i18n translations to all data-i18n DOM elements
+  I18N.applyTranslations();
+
   const socket = new SocketClient(CONFIG.SERVER_URL);
   const ui = new UI();
 
@@ -53,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function joinRoomById(roomId, team = 'none') {
     socket.joinRoom(roomId, myName, team, (ok, err) => {
-      if (!ok) ui.showNotification(err || 'Failed to join room', 'error');
+      if (!ok) ui.showNotification(err || I18N.t('failedToJoinRoom'), 'error');
     });
   }
 
@@ -80,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('room_joined', (data) => {
     myId = data.playerId;
     roomState = data.room;
-    document.getElementById('waiting-room-id').textContent = 'Room ID: ' + data.room.id;
+    document.getElementById('waiting-room-id').textContent = I18N.t('roomIdPrefix') + data.room.id;
     ui.updatePlayersList(data.room.players, data.room.hostId, myId);
     ui.showStartButton(data.room.hostId === myId);
     ui.showScreen('waiting');
@@ -93,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!exists) roomState.players.push(player);
       ui.updatePlayersList(roomState.players, roomState.hostId, myId);
     }
-    ui.showNotification(`${player.name} joined the room`, 'info');
+    ui.showNotification(I18N.t('playerJoinedRoom', { name: player.name }), 'info');
   });
 
   socket.on('player_left', (playerId) => {
@@ -140,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     ui.hideDeadOverlay();
+    ui.updatePauseOverlay(false);
     ui.showScreen('game');
 
     gameManager = new GameManager(socket, renderer, nextRenderer, ui);
@@ -149,6 +153,26 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.updateSpecialsQueue([], targetOrder, myId, (ti) => gameManager.useSpecialOnTarget(ti));
     gameManager.startGame(data.seed, data.startLevel);
   });
+
+  // ─────────────────────────────────────────────
+  // PAUSE HANDLER
+  // ─────────────────────────────────────────────
+  socket.on('game_paused', (data) => {
+    if (gameManager) {
+      gameManager.setPaused(data.paused);
+    }
+    ui.updatePauseOverlay(data.paused, data.playerName);
+
+    const msgKey = data.paused ? 'pausedBy' : 'gameResumed';
+    ui.showNotification(I18N.t(msgKey, { name: data.playerName }), data.paused ? 'warning' : 'success');
+  });
+
+  const btnPause = document.getElementById('btn-pause');
+  if (btnPause) {
+    btnPause.addEventListener('click', () => {
+      socket.togglePause();
+    });
+  }
 
   // ─────────────────────────────────────────────
   // OPPONENT BOARD UPDATES
@@ -188,13 +212,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (gameManager && gameManager.isAlive) {
       gameManager.addGarbage(lines);
       SoundManager.play('garbage');
-      ui.showNotification(`+${lines} garbage line${lines > 1 ? 's' : ''}!`, 'warning');
+      const msg = lines > 1
+        ? I18N.t('garbageLines', { count: lines })
+        : I18N.t('garbageLine', { count: lines });
+      ui.showNotification(msg, 'warning');
     }
   });
 
   socket.on('receive_special', (data) => {
     const special = typeof data === 'object' && data.special ? data.special : data;
-    const senderName = typeof data === 'object' && data.senderName ? data.senderName : 'un joueur';
+    const senderName = typeof data === 'object' && data.senderName ? data.senderName : I18N.t('defaultSender');
     if (gameManager && gameManager.isAlive) {
       const board = TetrisEngine.applySpecial(gameManager.board, special);
       gameManager.board = board;
@@ -202,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
       SoundManager.play('special');
       const specialDef = CONFIG.SPECIALS[special];
       const specialName = specialDef ? specialDef.name : special;
-      ui.showNotification(`${senderName} vous a envoyé : ${specialName} !`, 'warning');
+      ui.showNotification(I18N.t('receivedSpecial', { sender: senderName, special: specialName }), 'warning');
     }
   });
 
@@ -220,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (oRenderer) oRenderer.drawDeadOverlay();
 
     const playerName = roomState?.players.find(p => p.id === playerId)?.name || playerId;
-    ui.showNotification(`${playerName} was eliminated!`, 'info');
+    ui.showNotification(I18N.t('playerEliminated', { name: playerName }), 'info');
   });
 
   socket.on('game_over', (data) => {
@@ -319,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnToggleSound.addEventListener('click', () => {
       const isMuted = SoundManager.toggleMute();
       btnToggleSound.textContent = isMuted ? '🔇' : '🔊';
-      btnToggleSound.title = isMuted ? 'Activer le son' : 'Désactiver le son';
+      btnToggleSound.title = isMuted ? I18N.t('soundToggleTitleMuted') : I18N.t('soundToggleTitleUnmuted');
     });
   }
 
@@ -338,6 +365,89 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ─────────────────────────────────────────────
+  // HELP MODAL
+  // ─────────────────────────────────────────────
+  const btnHelp = document.getElementById('btn-help');
+  const helpOverlay = document.getElementById('help-modal-overlay');
+  const btnCloseHelp = document.getElementById('btn-close-help');
+
+  // Map of special keys → i18n description keys
+  const SPECIAL_DESC_KEYS = {
+    addLine:       'helpDescAddLine',
+    clearLine:     'helpDescClearLine',
+    nuke:          'helpDescNuke',
+    randomClear:   'helpDescRandomClear',
+    switchField:   'helpDescSwitchField',
+    clearSpecials: 'helpDescClearSpecials',
+    blockBomb:     'helpDescBlockBomb',
+    blockQuake:    'helpDescBlockQuake',
+    blockGravity:  'helpDescBlockGravity',
+  };
+
+  // Map of special keys → their numeric color code (for letter lookup & color)
+  const SPECIAL_TO_CODE = {};
+  for (const [code, name] of Object.entries(CONFIG.LETTER_TO_SPECIAL)) {
+    SPECIAL_TO_CODE[name] = Number(code);
+  }
+
+  function buildHelpGrid() {
+    const grid = document.getElementById('help-specials-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    for (const [specialKey, specialDef] of Object.entries(CONFIG.SPECIALS)) {
+      const code = SPECIAL_TO_CODE[specialKey];
+      const letter = CONFIG.SPECIAL_LETTERS[code] || '?';
+      const color = CONFIG.COLORS[code] || '#888';
+      const descKey = SPECIAL_DESC_KEYS[specialKey];
+      const desc = descKey ? I18N.t(descKey) : '';
+      const typeKey = `helpType${specialDef.type.charAt(0).toUpperCase() + specialDef.type.slice(1)}`;
+      const typeLabel = I18N.t(typeKey);
+
+      const card = document.createElement('div');
+      card.className = 'help-card';
+
+      card.innerHTML = `
+        <div class="help-letter-block" style="background:${color}; color:#000;">${letter}</div>
+        <div class="help-card-info">
+          <div class="help-card-name">${specialDef.name}</div>
+          <div class="help-card-desc">${desc}</div>
+          <span class="help-card-type help-card-type--${specialDef.type}">${typeLabel}</span>
+        </div>
+      `;
+
+      grid.appendChild(card);
+    }
+  }
+
+  function openHelp() {
+    buildHelpGrid();
+    helpOverlay.classList.remove('hidden');
+  }
+
+  function closeHelp() {
+    helpOverlay.classList.add('hidden');
+  }
+
+  if (btnHelp) {
+    btnHelp.addEventListener('click', openHelp);
+  }
+  if (btnCloseHelp) {
+    btnCloseHelp.addEventListener('click', closeHelp);
+  }
+  if (helpOverlay) {
+    helpOverlay.addEventListener('click', (e) => {
+      if (e.target === helpOverlay) closeHelp();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && helpOverlay && !helpOverlay.classList.contains('hidden')) {
+      closeHelp();
+    }
+  });
+
+  // ─────────────────────────────────────────────
   // KEYBOARD (game controls)
   // ─────────────────────────────────────────────
    document.addEventListener('keydown', (e) => {
@@ -347,13 +457,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (gameManager) {
+      if (e.key === 'p' || e.key === 'P') {
+        socket.togglePause();
+        e.preventDefault();
+        return;
+      }
       gameManager.handleKeyDown(e);
       // Prevent browser default actions (scrolling, Firefox quick-find on ', ", etc.)
       const preventKeys = ['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', ' ',
-        '1', '2', '3', '4', '5', '6', '&', 'é', '"', "'", '(', '-'];
-      const preventCodes = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6',
-        'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6',
-        'Space'];
+        '0', '1', '2', '3', '4', '5', '6', 'à', '&', 'é', '"', "'", '(', '-'];
+      const preventCodes = ['Digit0', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6',
+        'Numpad0', 'Numpad1', 'Numpad2', 'Numpad3', 'Numpad4', 'Numpad5', 'Numpad6',
+        'Space', 'KeyP'];
       if (preventKeys.includes(e.key) || preventCodes.includes(e.code)) {
         e.preventDefault();
       }

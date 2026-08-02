@@ -25,6 +25,7 @@ class GameManager {
     this.lockDelay = 200; // milliseconds
     this.lockTimer = null;
     this.myId = null;
+    this.isPaused = false;
 
     if (this.ui) {
       this.ui.updateSpecialsQueue(this.specials, [], null);
@@ -53,7 +54,7 @@ class GameManager {
         this.ui.showCountdownText(count);
         SoundManager.play('move');
       } else if (count === 0) {
-        this.ui.showCountdownText('GO!');
+        this.ui.showCountdownText(I18N.t('countdown_GO'));
         SoundManager.play('drop');
       } else {
         clearInterval(countdownInterval);
@@ -122,10 +123,11 @@ class GameManager {
     this.lockPiece();
   }
 
-  rotatePiece() {
+  rotatePiece(direction = 1) {
     if (!this.isAlive) return;
     const def = TetrisEngine.PIECES[this.currentPiece.type];
-    const newRot = (this.currentPiece.rotIndex + 1) % def.shapes.length;
+    const len = def.shapes.length;
+    const newRot = (this.currentPiece.rotIndex + direction + len) % len;
     const newShape = def.shapes[newRot];
     
     // Wall-kick & Ceiling-kick offsets to try (dx, dy)
@@ -237,7 +239,7 @@ class GameManager {
     const deltaTime = time - this.lastTime;
     this.lastTime = time;
 
-    if (!this.isCountingDown) {
+    if (!this.isCountingDown && !this.isPaused) {
       this.dropAccumulator += deltaTime;
       
       const dropInterval = CONFIG.GRAVITY[Math.min(this.level, 9)];
@@ -286,19 +288,19 @@ class GameManager {
     if (!targetId && targetIndex > 0) {
       // If there are opponents but less than targetIndex (e.g. 2 players total, opponent is at index 1 = key 2)
       // Show informative error
-      this.ui.showNotification(`No player assigned to key [${targetIndex + 1}]!`, 'warning');
+      this.ui.showNotification(I18N.t('noPlayerAssigned', { key: targetIndex + 1 }), 'warning');
       return;
     }
 
     // Guard: ensure target is alive before consuming special
     if (targetIndex > 0 && (!this.alivePlayers || !this.alivePlayers.has(targetId))) {
-      this.ui.showNotification(`Target player is dead or unavailable!`, 'warning');
+      this.ui.showNotification(I18N.t('targetPlayerDead'), 'warning');
       return;
     }
 
     const special = this.specials[0]; // peek first special
     if (special === 'switchField' && (targetIndex === 0 || targetId === this.myId)) {
-      this.ui.showNotification(`Impossible de s'envoyer un Switch Field sur soi-même !`, 'warning');
+      this.ui.showNotification(I18N.t('cannotSwitchSelf'), 'warning');
       return;
     }
 
@@ -313,12 +315,12 @@ class GameManager {
       // Self-target
       this.board = TetrisEngine.applySpecial(this.board, special);
       this.socket.sendBoardUpdate({ board: this.board, score: this.score, level: this.level, lines: this.lines });
-      this.ui.showNotification(`Utilisé sur soi : ${specialName}`, 'info');
+      this.ui.showNotification(I18N.t('usedOnSelf', { special: specialName }), 'info');
     } else {
       // Opponent target
       this.socket.useSpecial({ special, targetId });
       const notifType = specialType === 'negative' ? 'warning' : 'success';
-      let msg = `Envoyé ${specialName} à la cible !`;
+      let msg = I18N.t('sentSpecial', { special: specialName });
       this.ui.showNotification(msg, notifType);
       this.socket.sendChat(msg);
     }
@@ -329,7 +331,7 @@ class GameManager {
   }
 
   handleKeyDown(e) {
-    if (!this.gameStarted || !this.isAlive || this.isCountingDown) return;
+    if (!this.gameStarted || !this.isAlive || this.isCountingDown || this.isPaused) return;
 
     const key = e.key;
     const code = e.code || '';
@@ -337,7 +339,8 @@ class GameManager {
     if (key === 'ArrowLeft')  this.movePiece(-1);
     else if (key === 'ArrowRight') this.movePiece(1);
     else if (key === 'ArrowDown')  this.dropPiece();
-    else if (key === 'ArrowUp')    this.rotatePiece();
+    else if (key === 'ArrowUp')    this.rotatePiece(1);
+    else if (key === '0' || key === 'à' || code === 'Digit0' || code === 'Numpad0') this.rotatePiece(-1);
     else if (key === ' ')          this.hardDrop();
     // Support standard 1-6 keys, Digit1-6, Numpad1-6, and AZERTY (&, é, ", ', (, -)
     else if (key === '1' || key === '&' || code === 'Digit1' || code === 'Numpad1') this.useSpecialOnTarget(0);
@@ -355,7 +358,15 @@ class GameManager {
   stopLoop() {
     this.isAlive = false;
     this.gameStarted = false;
+    this.isPaused = false;
     SoundManager.stopMusic();
+  }
+
+  setPaused(paused) {
+    this.isPaused = paused;
+    if (paused) {
+      this.clearLockTimer();
+    }
   }
 
   gameOver() {

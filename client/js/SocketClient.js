@@ -7,7 +7,7 @@ class SocketClient {
     [
       'room_joined', 'rooms_list', 'player_joined', 'player_left',
       'game_started', 'board_update', 'receive_garbage', 'receive_special',
-      'player_lost', 'player_team_updated', 'game_over', 'chat_message', 'error'
+      'player_lost', 'player_team_updated', 'game_over', 'game_paused', 'chat_message', 'error'
     ].forEach(event => {
       this.socket.on(event, (data) => {
         if (this.handlers[event]) this.handlers[event](data);
@@ -57,6 +57,10 @@ class SocketClient {
 
   sendChat(message) {
     this.socket.emit('chat_message', message);
+  }
+
+  togglePause() {
+    this.socket.emit('toggle_pause');
   }
 
   requestRooms(callback) {

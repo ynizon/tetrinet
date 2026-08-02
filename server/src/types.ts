@@ -44,6 +44,7 @@ export interface ClientToServerEvents {
   lines_cleared: (data: {count: number, board: Board, score: number}) => void;
   use_special: (data: {special: SpecialType, targetId: string | null}) => void;
   player_lost: (data: {board: Board}) => void;
+  toggle_pause: () => void;
   chat_message: (message: string) => void;
   request_rooms: (callback: (rooms: RoomSummary[]) => void) => void;
 }
@@ -60,6 +61,7 @@ export interface ServerToClientEvents {
   player_lost: (playerId: string) => void;
   player_team_updated: (data: {playerId: string, team: TeamColor}) => void;
   game_over: (data: {winner: string | null, winnerTeam?: TeamColor}) => void;
+  game_paused: (data: {paused: boolean, playerName: string}) => void;
   chat_message: (data: {playerName: string, message: string, timestamp: number}) => void;
   error: (message: string) => void;
 }

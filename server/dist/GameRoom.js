@@ -10,6 +10,7 @@ class GameRoom {
         this.players = new Map();
         this.hostId = hostId;
         this.gameStarted = false;
+        this.paused = false;
     }
     /**
      * Adds a player to the room.
@@ -42,7 +43,20 @@ class GameRoom {
         }
         const seed = Math.floor(Math.random() * 1000000);
         const roomState = this.getState();
+        this.paused = false;
         io.to(this.id).emit('game_started', { seed, startLevel: 0 });
+    }
+    /**
+     * Toggles the pause state for the room.
+     */
+    togglePause(playerId, io) {
+        if (!this.gameStarted)
+            return;
+        const player = this.players.get(playerId);
+        if (!player)
+            return;
+        this.paused = !this.paused;
+        io.to(this.id).emit('game_paused', { paused: this.paused, playerName: player.name });
     }
     /**
      * Handles a board update from a player.

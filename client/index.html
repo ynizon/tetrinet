@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TetriNET</title>
+    <title>TitreNET</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,15 +11,33 @@
     <div id="app">
         <!-- SOUND & VOLUME CONTROLS -->
         <div class="sound-controls-container">
-            <button id="btn-toggle-sound" class="btn-sound-toggle" title="Activer / Désactiver le son">🔊</button>
+            <button id="btn-toggle-sound" class="btn-sound-toggle" data-i18n-title="soundToggleTitle">🔊</button>
+            <button id="btn-help" class="btn-sound-toggle" data-i18n-title="helpToggleTitle">❓</button>
             <div id="sound-settings-popover" class="sound-popover glass-panel">
                 <div class="slider-group">
-                    <label for="slider-music-volume">🎵 Musique</label>
+                    <label for="slider-music-volume" data-i18n="labelMusic">🎵 Music</label>
                     <input type="range" id="slider-music-volume" min="0" max="1" step="0.05" value="0.5">
                 </div>
                 <div class="slider-group">
-                    <label for="slider-sfx-volume">🔊 Effets Sonores</label>
+                    <label for="slider-sfx-volume" data-i18n="labelSfx">🔊 Sound Effects</label>
                     <input type="range" id="slider-sfx-volume" min="0" max="1" step="0.05" value="0.7">
+                </div>
+            </div>
+        </div>
+
+        <!-- HELP MODAL -->
+        <div id="help-modal-overlay" class="help-overlay hidden">
+            <div class="help-modal glass-panel">
+                <div class="help-header">
+                    <h2 class="neon-title help-title" data-i18n="helpTitle">Special Blocks</h2>
+                    <button id="btn-close-help" class="btn-close-help">&times;</button>
+                </div>
+                <p class="help-subtitle" data-i18n="helpSubtitle">Each special block is marked with a letter on the board. Here's what they do:</p>
+                <div class="help-grid" id="help-specials-grid">
+                    <!-- Filled dynamically by JS -->
+                </div>
+                <div class="help-footer">
+                    <p class="help-tip" data-i18n="helpTip">Collect specials by clearing lines, then use number keys (1-6) to target opponents!</p>
                 </div>
             </div>
         </div>
@@ -27,29 +45,29 @@
         <!-- LOBBY SCREEN -->
         <div id="screen-lobby" class="screen active">
             <div class="panel glass-panel">
-                <h1 class="neon-title">TetriNET</h1>
+                <h1 class="neon-title" data-i18n="lobbyTitle">TetriNET</h1>
                 <div class="form-group">
-                    <label>Player Name:</label>
-                    <input type="text" id="input-player-name" placeholder="Enter your name" maxlength="15">
+                    <label data-i18n="labelPlayerName">Player Name:</label>
+                    <input type="text" id="input-player-name" data-i18n-placeholder="placeholderPlayerName" placeholder="Enter your name" maxlength="15">
                 </div>
                 <div class="form-group">
-                    <label>Room ID (optional):</label>
-                    <input type="text" id="input-room-id" placeholder="Leave empty to create">
+                    <label data-i18n="labelRoomId">Room ID (optional):</label>
+                    <input type="text" id="input-room-id" data-i18n-placeholder="placeholderRoomId" placeholder="Leave empty to create">
                 </div>
                 <div class="form-group">
-                    <label>Team / Equipe :</label>
+                    <label data-i18n="labelTeam">Team:</label>
                     <select id="select-team-lobby" class="team-select">
-                        <option value="none">Solo (Pas d'équipe)</option>
-                        <option value="red">🔴 Équipe Rouge</option>
-                        <option value="blue">🔵 Équipe Bleue</option>
-                        <option value="green">🟢 Équipe Verte</option>
-                        <option value="yellow">🟡 Équipe Jaune</option>
+                        <option value="none" data-i18n="teamSolo">Solo (No team)</option>
+                        <option value="red" data-i18n="teamRed">🔴 Red Team</option>
+                        <option value="blue" data-i18n="teamBlue">🔵 Blue Team</option>
+                        <option value="green" data-i18n="teamGreen">🟢 Green Team</option>
+                        <option value="yellow" data-i18n="teamYellow">🟡 Yellow Team</option>
                     </select>
                 </div>
-                <button id="btn-join-room" class="btn-primary">Join / Create Room</button>
+                <button id="btn-join-room" class="btn-primary" data-i18n="btnJoinRoom">Join / Create Room</button>
                 
                 <div class="room-list-container">
-                    <h3>Available Rooms</h3>
+                    <h3 data-i18n="availableRooms">Available Rooms</h3>
                     <ul id="room-list"></ul>
                 </div>
             </div>
@@ -58,34 +76,34 @@
         <!-- WAITING ROOM SCREEN -->
         <div id="screen-waiting" class="screen">
             <div class="panel glass-panel">
-                <h2 class="neon-title">Waiting Room</h2>
+                <h2 class="neon-title" data-i18n="waitingRoomTitle">Waiting Room</h2>
                 <h3 id="waiting-room-id" class="glow-text"></h3>
                 
                 <div class="waiting-layout">
                     <div class="player-list-container">
-                        <h3>Players</h3>
+                        <h3 data-i18n="labelPlayers">Players</h3>
                         <div class="team-change-wrapper">
-                            <label>Mon Équipe :</label>
+                            <label data-i18n="labelMyTeam">My Team:</label>
                             <select id="select-team-waiting" class="team-select">
-                                <option value="none">Solo (Pas d'équipe)</option>
-                                <option value="red">🔴 Équipe Rouge</option>
-                                <option value="blue">🔵 Équipe Bleue</option>
-                                <option value="green">🟢 Équipe Verte</option>
-                                <option value="yellow">🟡 Équipe Jaune</option>
+                                <option value="none" data-i18n="teamSolo">Solo (No team)</option>
+                                <option value="red" data-i18n="teamRed">🔴 Red Team</option>
+                                <option value="blue" data-i18n="teamBlue">🔵 Blue Team</option>
+                                <option value="green" data-i18n="teamGreen">🟢 Green Team</option>
+                                <option value="yellow" data-i18n="teamYellow">🟡 Yellow Team</option>
                             </select>
                         </div>
                         <ul id="waiting-player-list"></ul>
                         <div class="controls">
-                            <button id="btn-start-game" class="btn-primary hidden">Start Game</button>
-                            <button id="btn-leave-room" class="btn-secondary">Leave Room</button>
+                            <button id="btn-start-game" class="btn-primary hidden" data-i18n="btnStartGame">Start Game</button>
+                            <button id="btn-leave-room" class="btn-secondary" data-i18n="btnLeaveRoom">Leave Room</button>
                         </div>
                     </div>
                     
                     <div class="chat-container">
                         <div id="waiting-chat-messages" class="chat-messages"></div>
                         <div class="chat-input-wrapper">
-                            <input type="text" id="waiting-chat-input" placeholder="Type a message...">
-                            <button id="btn-waiting-chat">Send</button>
+                            <input type="text" id="waiting-chat-input" data-i18n-placeholder="placeholderChat" placeholder="Type a message...">
+                            <button id="btn-waiting-chat" data-i18n="btnSend">Send</button>
                         </div>
                     </div>
                 </div>
@@ -99,28 +117,30 @@
                 <div class="sidebar left-sidebar">
                     <div class="panel info-panel glass-panel">
                         <div class="stat-box">
-                            <div class="stat-label">SCORE</div>
+                            <div class="stat-label" data-i18n="statScore">SCORE</div>
                             <div id="game-score" class="stat-value glow-text">0</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">LEVEL</div>
+                            <div class="stat-label" data-i18n="statLevel">LEVEL</div>
                             <div id="game-level" class="stat-value">0</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">LINES</div>
+                            <div class="stat-label" data-i18n="statLines">LINES</div>
                             <div id="game-lines" class="stat-value">0</div>
                         </div>
                     </div>
                     
                     <div class="panel next-piece-panel glass-panel">
-                        <div class="stat-label">NEXT</div>
+                        <div class="stat-label" data-i18n="statNext">NEXT</div>
                         <canvas id="canvas-next-piece" width="120" height="120"></canvas>
                     </div>
 
                     <div class="panel specials-panel glass-panel">
-                        <div class="stat-label">SPECIALS</div>
+                        <div class="stat-label" data-i18n="statSpecials">SPECIALS</div>
                         <div id="specials-queue" class="specials-queue"></div>
                     </div>
+
+                    <button id="btn-pause" class="btn-pause" data-i18n="btnPause">⏸ PAUSE</button>
                 </div>
 
                 <!-- Main Board -->
@@ -129,8 +149,13 @@
                     <div id="countdown-overlay" class="countdown-overlay hidden">
                         <span id="countdown-text">3</span>
                     </div>
+                    <div id="pause-overlay" class="pause-overlay hidden">
+                        <span class="pause-icon">⏸</span>
+                        <h2 data-i18n="pauseLabel">PAUSED</h2>
+                        <p id="pause-info" class="pause-info"></p>
+                    </div>
                     <div id="main-dead-overlay" class="dead-overlay hidden">
-                        <h2>ELIMINATED</h2>
+                        <h2 data-i18n="eliminated">ELIMINATED</h2>
                     </div>
                 </div>
 
@@ -141,7 +166,7 @@
                     </div>
                     <div class="panel in-game-chat glass-panel">
                         <div id="game-chat-messages" class="chat-messages mini"></div>
-                        <input type="text" id="game-chat-input" placeholder="Chat..." class="mini-input">
+                        <input type="text" id="game-chat-input" data-i18n-placeholder="placeholderChatGame" placeholder="Chat..." class="mini-input">
                     </div>
                 </div>
             </div>
@@ -150,17 +175,17 @@
         <!-- GAME OVER SCREEN -->
         <div id="screen-gameover" class="screen">
             <div class="panel glass-panel">
-                <h1 class="neon-title">GAME OVER</h1>
+                <h1 class="neon-title" data-i18n="gameOverTitle">GAME OVER</h1>
                 <h2 id="gameover-winner" class="glow-text"></h2>
                 
                 <div class="final-scores-container">
-                    <h3>Final Scores</h3>
+                    <h3 data-i18n="finalScores">Final Scores</h3>
                     <ul id="gameover-scores"></ul>
                 </div>
                 
                 <div class="controls">
-                    <button id="btn-play-again" class="btn-primary hidden">Play Again</button>
-                    <button id="btn-back-lobby" class="btn-secondary">Back to Lobby</button>
+                    <button id="btn-play-again" class="btn-primary hidden" data-i18n="btnPlayAgain">Play Again</button>
+                    <button id="btn-back-lobby" class="btn-secondary" data-i18n="btnBackLobby">Back to Lobby</button>
                 </div>
             </div>
         </div>
@@ -170,6 +195,9 @@
 
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
+    <script src="lang/en.js"></script>
+    <script src="lang/fr.js"></script>
+    <script src="lang/i18n.js"></script>
     <script src="js/config.js"></script>
     <script src="js/TetrisEngine.js"></script>
     <script src="js/Renderer.js"></script>

@@ -106,6 +106,14 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('toggle_pause', () => {
+        if (!currentRoomId) return;
+        const room = rooms.get(currentRoomId);
+        if (room) {
+            room.togglePause(socket.id, io);
+        }
+    });
+
     socket.on('chat_message', (message) => {
         if (!currentRoomId) return;
         const room = rooms.get(currentRoomId);

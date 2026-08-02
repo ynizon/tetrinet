@@ -111,7 +111,7 @@ class Renderer {
     this.ctx.textAlign = 'center';
     this.ctx.fillText('☠', this.canvas.width / 2, this.canvas.height / 2);
     this.ctx.font = `bold ${Math.max(8, this.cellSize * 0.5)}px Inter, sans-serif`;
-    this.ctx.fillText('OUT', this.canvas.width / 2, this.canvas.height / 2 + this.cellSize);
+    this.ctx.fillText(I18N.t('out'), this.canvas.width / 2, this.canvas.height / 2 + this.cellSize);
     this.ctx.textAlign = 'left';
   }
 }
