@@ -9,19 +9,29 @@ Built with vanilla JavaScript on the client and a Node.js/TypeScript server usin
 
 ---
 
+## 🌐 Play Online
+
+You can play live from time to time on: **[http://home.gameandme.fr:3001](http://home.gameandme.fr:3001)**
+
+---
+
 ## ✨ Features
 
 - **Multiplayer** — Up to 6 players per room with real-time board synchronization
+- **Teams** — Solo play or team-based match options
 - **Special Blocks** — Collect and use 9 unique power-ups, color-coded by type:
   - 🟢 **Positive** (green): Clear Line, Random Clear, Clear Specials, Gravity
   - 🔴 **Negative** (red): Add Line, Nuke, Block Bomb, Quake
   - 🟡 **Neutral** (gold): Switch Field
+- **Internationalization (i18n)** — Built-in multi-language support (English & French) with automatic browser detection
+- **Audio & Sound System** — Sound effects and background music with customizable volume sliders
+- **Interactive Help Modal** — Quick in-game reference for special block abilities
 - **Lobby System** — Create or join rooms, see available games at a glance
-- **In-game Chat** — Communicate with other players during the game
+- **In-game Chat & Notifications** — Communicate with other players during the game with toast alerts
 - **Classic Controls** — Arrow keys for movement, number keys (1-6) to target players with specials
 - **Ghost Piece** — See where your piece will land
 - **Garbage Lines** — Clear multiple lines to send garbage to opponents
-- **Lock Delay** — 200ms grace period for last-second moves before a piece locks
+- **Lock Delay** — Grace period for last-second moves before a piece locks
 - **Neon Aesthetic** — Cyberpunk-inspired glassmorphism UI with glowing effects
 
 ---
@@ -61,7 +71,7 @@ npm run build
 npm start
 ```
 
-The game will be available at **http://localhost:3000**.
+The game will be available locally at **http://localhost:3000**.
 
 ### Development mode (auto-reload)
 
@@ -88,10 +98,10 @@ docker compose logs -f
 docker compose down
 ```
 
-To use a custom port (e.g. 8080):
+To use a custom port (e.g. 3001 or 8080):
 
 ```bash
-PORT=8080 docker compose up -d --build
+PORT=3001 docker compose up -d --build
 ```
 
 ---
@@ -145,16 +155,22 @@ Points are multiplied by `(level + 1)`. Clear 2+ lines at once to send garbage t
 ```
 tetrinet/
 ├── client/                  # Frontend (vanilla JS)
+│   ├── assets/              # Audio & visual assets
 │   ├── css/
 │   │   └── style.css        # Neon/glassmorphism styles
 │   ├── js/
 │   │   ├── config.js        # Game constants & special definitions
 │   │   ├── GameManager.js   # Core game loop & logic
-│   │   ├── TetrisEngine.js  # Board operations & piece mechanics
 │   │   ├── Renderer.js      # Canvas rendering
 │   │   ├── SocketClient.js  # Socket.IO client wrapper
+│   │   ├── SoundManager.js  # Audio player & SFX/music controls
+│   │   ├── TetrisEngine.js  # Board operations & piece mechanics
 │   │   ├── UI.js            # DOM manipulation & screen management
 │   │   └── main.js          # App entry point & event wiring
+│   ├── lang/                # Internationalization
+│   │   ├── en.js            # English translations
+│   │   ├── fr.js            # French translations
+│   │   └── i18n.js          # Translation manager
 │   └── index.html           # Single-page app shell
 │
 ├── server/                  # Backend (Node.js + TypeScript)
@@ -208,3 +224,4 @@ PORT=8080 npm start
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 © 2026 Yohann Nizon
+
