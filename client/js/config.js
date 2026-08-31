@@ -34,17 +34,17 @@ const CONFIG = {
     blockQuake:    { name: '🌊 Quake',             type: 'negative' },
     blockGravity:  { name: '⬇️ Gravity',          type: 'positive' },
   },
-  // Classic TetriNET letter codes shown ON the board blocks
+  // Icons shown ON the board blocks (replacing classic TetriNET letters)
   SPECIAL_LETTERS: {
-    10: 'A',  // Add Line
-    11: 'C',  // Clear Line
-    12: 'N',  // Nuke Field (Clear)
-    13: 'R',  // Random Clear
-    14: 'S',  // Switch Field
-    15: 'B',  // Clear Specials
-    16: 'O',  // Block Bomb
-    17: 'Q',  // Quake
-    18: 'G',  // Gravity
+    10: '➕',  // Add Line
+    11: '🧹',  // Clear Line
+    12: '💥',  // Nuke Field (Clear)
+    13: '🎲',  // Random Clear
+    14: '🔄',  // Switch Field
+    15: '🛡️',  // Clear Specials
+    16: '💣',  // Block Bomb
+    17: '🌊',  // Quake
+    18: '⬇️',  // Gravity
   },
   // Map letter → special name (for targeting display)
   LETTER_TO_SPECIAL: {

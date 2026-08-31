@@ -203,6 +203,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const oRenderer = opponentRenderers.get(data.playerId);
     oRenderer.clear();
     oRenderer.drawBoard(data.board);
+
+    // Highlight opponent wrapper if their board contains Block Bombs (cell value 16)
+    const wrapper = document.getElementById(`opponent-wrapper-${data.playerId}`);
+    if (wrapper) {
+      const hasBomb = data.board.some(row => row.some(cell => cell === 16));
+      wrapper.classList.toggle('has-bomb', hasBomb);
+    }
   });
 
   // ─────────────────────────────────────────────

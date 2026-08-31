@@ -121,19 +121,19 @@ PORT=3001 docker compose up -d --build
 
 ### Special Blocks
 
-Special blocks appear on the board as lettered cells. Clear the line containing them to collect the special into your queue (max 5). Press a number key to use the first special in your queue on the corresponding target.
+Special blocks appear on the board as iconic cells. Clear the line containing them to collect the special into your queue (max 5). Press a number key to use the first special in your queue on the corresponding target.
 
-| Letter | Special | Type | Effect |
-|--------|---------|------|--------|
-| **A** | Add Line | 🔴 Negative | Adds a garbage line to the target |
-| **C** | Clear Line | 🟢 Positive | Clears the bottom line |
-| **N** | Nuke | 🔴 Negative | Nukes the target's entire board |
-| **R** | Random Clear | 🟢 Positive | Randomly clears blocks |
-| **S** | Switch Field | 🟡 Neutral | Swaps your board with the target's |
-| **B** | Clear Specials | 🟢 Positive | Removes all special blocks from the board |
-| **O** | Block Bomb | 🔴 Negative | Explodes blocks around special cells |
-| **Q** | Quake | 🔴 Negative | Shifts each line randomly left or right |
-| **G** | Gravity | 🟢 Positive | Pulls all floating blocks down |
+| Icon | Special | Type | Effect |
+|:----:|---------|------|--------|
+| ➕ | Add Line | 🔴 Negative | Adds a garbage line to the target |
+| 🧹 | Clear Line | 🟢 Positive | Clears the bottom line |
+| 💥 | Nuke | 🔴 Negative | Nukes the target's entire board |
+| 🎲 | Random Clear | 🟢 Positive | Randomly clears blocks |
+| 🔄 | Switch Field | 🟡 Neutral | Swaps your board with the target's |
+| 🛡️ | Clear Specials | 🟢 Positive | Removes all special blocks from the board |
+| 💣 | Block Bomb | 🔴 Negative | Explodes blocks around special cells |
+| 🌊 | Quake | 🔴 Negative | Shifts each line randomly left or right |
+| ⬇️ | Gravity | 🟢 Positive | Pulls all floating blocks down |
 
 ### Scoring
 

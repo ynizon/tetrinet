@@ -69,11 +69,11 @@ class Renderer {
     this.ctx.fillRect(x + 1, y + s - 3, s - 2, 2);
     this.ctx.fillRect(x + s - 3, y + 1, 2, s - 2);
 
-    // === Letter for special blocks ===
+    // === Icon for special blocks ===
     const letter = CONFIG.SPECIAL_LETTERS && CONFIG.SPECIAL_LETTERS[colorValue];
     if (letter && s >= 10) {
-      const fontSize = Math.max(8, Math.floor(s * 0.55));
-      this.ctx.font = `bold ${fontSize}px Orbitron, monospace`;
+      const fontSize = Math.max(8, Math.floor(s * 0.45));
+      this.ctx.font = `${fontSize}px sans-serif`;
       this.ctx.fillStyle = '#000';
       this.ctx.textAlign = 'center';
       this.ctx.textBaseline = 'middle';

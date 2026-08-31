@@ -314,6 +314,16 @@ canvas { display: block; }
   border-radius: 5px;
   position: relative;
   width: fit-content;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.opponent-board-wrapper.has-bomb {
+  border-color: #ff4444;
+  box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), 0 0 20px rgba(255, 68, 68, 0.4);
+  animation: bomb-pulse 1s ease-in-out infinite;
+}
+@keyframes bomb-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), 0 0 20px rgba(255, 68, 68, 0.4); }
+  50%      { box-shadow: 0 0 15px rgba(255, 68, 68, 1),   0 0 30px rgba(255, 68, 68, 0.6); }
 }
 .opponent-name {
   font-size: 0.75rem;
@@ -395,9 +405,7 @@ canvas { display: block; }
   background: rgba(20,20,40,0.9);
   display: flex;
   justify-content: center; align-items: center;
-  font-family: 'Orbitron', monospace;
-  font-size: 0.85rem;
-  font-weight: bold;
+  font-size: 0.9rem;
   color: #aaa;
   transition: all 0.15s ease;
 }

@@ -203,14 +203,14 @@ class UI {
     }
   }
 
-  /** Get the letter code for a special name */
+  /** Get the icon for a special name */
   _specialLetter(specialName) {
     const map = {
-      addLine: 'A', clearLine: 'C', nuke: 'N', randomClear: 'R',
-      switchField: 'S', clearSpecials: 'B', blockBomb: 'O',
-      blockQuake: 'Q', blockGravity: 'G',
+      addLine: '➕', clearLine: '🧹', nuke: '💥', randomClear: '🎲',
+      switchField: '🔄', clearSpecials: '🛡️', blockBomb: '💣',
+      blockQuake: '🌊', blockGravity: '⬇️',
     };
-    return map[specialName] || '?';
+    return map[specialName] || '⚡';
   }
 
   showDeadOverlay() {
